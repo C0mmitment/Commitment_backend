@@ -1,7 +1,6 @@
 # Commitment — BackendSystems
 アプリケーションのバックエンドシステム
 
-
 ## ⚙️使用技術
 <p align="center">
     <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" alt="Node.js" width="60" height="60"/>
@@ -33,10 +32,11 @@
 
 
 ## 📔目次
-- [特徴](#特徴)
-- [開発環境](#開発環境)
-- [構成](#構成)
-- [開発状況](#開発状況)
+- [特徴](#✅️特徴)
+- [開発環境](#💻️開発環境)
+- [構成](#📂構成)
+- [開発状況](#📊開発状況)
+- [構築方法](#構築方法)
 
 ## ✅️特徴
 複数のコンテナを用いた高速な処理が特徴
@@ -67,3 +67,58 @@ Nodejs,Go,Pythonのハイブリッド仕様で高速化を実現(予定)
 * [ ] デザイン完了
 * [ ] バックエンド実装中
 * [ ] 完成
+
+## 🛠️構築方法
+
+### 前提条件
+* dockerとgitがインストールされている事
+* [Google Cloud CLIのセットアップ](Docs/GoogleCloudSetup.md)が完了している
+
+
+</br>
+
+### 構築方法
+</br>
+
+1. リポジトリを任意の場所クローンしましょう
+
+```
+ clone https://github.com/C0mmitment/Commitment_backend.git
+```
+
+2. コンテナを作成します
+* クローンしたディレクトリでPowerShellもしくはzshを開いてください。
+
+### Windows
+
+```
+stard.bat
+```
+
+### MacOS
+```
+start.command
+```
+
+3. VSCodeでアタッチ
+
+![ContainerImage](Docs/Resources/Container.png)
+
+4. 各コンテナの初期設定
+
+* すべてのコンテナはこの場所で開発されています
+```
+/usr/src/app
+```
+
+* コンテナを作成した最初は必ず、init.shを実行してください。
+```
+sudo ./init.sh
+```
+
+※稀にPermissionで弾かれるのでその場合は以下のコマンドを実行してください
+```
+sudo chmod -x ./init.sh
+```
+
+* 初期設定完了！
