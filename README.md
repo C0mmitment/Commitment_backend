@@ -15,6 +15,23 @@
     <img src="https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white&style=for-the-badge" />
 </p>
 
+### その他
+
+<p align="center">
+    <img src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white&style=for-the-badge" />
+    <img src="https://img.shields.io/badge/Echo-00ADD8?logo=go&logoColor=white&style=for-the-badge" />
+    <img src="https://img.shields.io/badge/Express-000000?logo=express&logoColor=white&style=for-the-badge" />
+    <img src="https://img.shields.io/badge/Vision%20AI-4285F4?logo=googlecloud&logoColor=white&style=for-the-badge" />
+    <img src="https://img.shields.io/badge/NIMA-9C27B0?logo=ai&logoColor=white&style=for-the-badge" />
+    <img src="https://img.shields.io/badge/GCP-4285F4?logo=googlecloud&logoColor=white&style=for-the-badge" />
+    <img src="https://img.shields.io/badge/ChatGPT-74aa9c?logo=openai&logoColor=white&style=for-the-badge" />
+    <img src="https://img.shields.io/badge/Gemini-4285F4?logo=google&logoColor=white&style=for-the-badge" />
+    <img src="https://img.shields.io/badge/GitHub%20Copilot-000000?logo=githubcopilot&logoColor=white&style=for-the-badge" />
+</p>
+
+
+
+
 ## 📔目次
 - [特徴](#特徴)
 - [開発環境](#開発環境)
@@ -25,6 +42,8 @@
 複数のコンテナを用いた高速な処理が特徴
 
 Nodejs,Go,Pythonのハイブリッド仕様で高速化を実現(予定)
+
+クラウドフル活用、バックエンドリーダーのお財布もフル活用
 
 ## 💻️開発環境
 
@@ -44,7 +63,7 @@ Nodejs,Go,Pythonのハイブリッド仕様で高速化を実現(予定)
 
 ## 📊開発状況
 
-* [ ] 仕様書作成 
-* [x] デザイン完了 
-* [ ] バックエンド実装中 
-* [ ] テスト・デバッグ
+* [ ] 仕様策定
+* [ ] デザイン完了
+* [ ] バックエンド実装中
+* [ ] 完成
