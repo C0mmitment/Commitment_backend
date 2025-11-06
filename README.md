@@ -1,4 +1,4 @@
-# Commitment — BackendSystems
+# 📌Commitment — BackendSystems
 アプリケーションのバックエンドシステム
 
 ## ⚙️使用技術
@@ -39,11 +39,11 @@
 - [構築方法](#構築方法)
 
 ## ✅️特徴
-複数のコンテナを用いた高速な処理が特徴
+複数のコンテナを用いた高速な処理が特徴。
 
-Nodejs,Go,Pythonのハイブリッド仕様で高速化を実現(予定)
+Nodejs,Go,Pythonのハイブリッド仕様で高速化を実現(予定)。
 
-クラウドフル活用、バックエンドリーダーのお財布もフル活用
+クラウドフル活用、バックエンドリーダーのお財布もフル活用。
 
 ## 💻️開発環境
 
@@ -71,8 +71,8 @@ Nodejs,Go,Pythonのハイブリッド仕様で高速化を実現(予定)
 ## 🛠️構築方法
 
 ### 前提条件
-* dockerとgitがインストールされている事
-* [Google Cloud CLIのセットアップ](Docs/GoogleCloudSetup.md)が完了している
+* dockerとgitがインストールされている事。
+* [Google Cloud CLIのセットアップ](GoogleCloudSetup.md)が完了している。
 
 
 </br>
@@ -80,13 +80,13 @@ Nodejs,Go,Pythonのハイブリッド仕様で高速化を実現(予定)
 ### 構築方法
 </br>
 
-1. リポジトリを任意の場所クローンしましょう
+1. リポジトリを任意の場所クローンしましょう。
 
 ```
 git clone https://github.com/C0mmitment/Commitment_backend.git
 ```
 
-2. コンテナを作成します
+2. コンテナを作成します。
 * クローンしたディレクトリでPowerShellもしくはzshを開いてください。
 
 ### Windows
@@ -105,8 +105,10 @@ start.command
 ![ContainerImage](Docs/Resources/Container.png)
 
 4. 各コンテナの初期設定
+* この作業はアタッチしたコンテナ内のshellで行ってください。
 
-* すべてのコンテナはこの場所で開発されています
+
+* すべてのコンテナはこの場所で開発されています。
 ```
 /usr/src/app
 ```
