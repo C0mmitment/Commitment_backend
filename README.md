@@ -72,7 +72,7 @@ Nodejs,Go,Pythonのハイブリッド仕様で高速化を実現(予定)。
 
 ### 前提条件
 * dockerとgitがインストールされている事。
-* [Google Cloud CLIのセットアップ](GoogleCloudSetup.md)が完了している。
+* [Google Cloud CLIのセットアップ](Docs/GoogleCloudSetup.md)が完了している。
 
 
 </br>
