@@ -113,20 +113,16 @@ start.command
 
 * コンテナを作成した最初は必ず、init.shを実行してください。
 ```
-sudo ./init.sh
+./init.sh
 ```
 
-※稀にPermissionで弾かれるのでその場合は以下のコマンドを実行してください
-```
-sudo chmod -x ./init.sh
-```
 
 * 初期設定完了！ サーバーの実行は以下のコマンドで行うことができます。
 ```
-sudo ./serv.sh
+./serv.sh
 ```
 
-※稀にPermissionで弾かれるのでその場合は以下のコマンドを実行してください
+※Permissionで弾かれる場合は以下のコマンドを実行してください。
 ```
-sudo chmod -x ./serv.sh
-```
+sudo chmod +x ./*.sh
+``` 
