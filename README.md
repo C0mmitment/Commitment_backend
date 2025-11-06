@@ -2,28 +2,49 @@
 アプリケーションのバックエンドシステム
 
 
-## 使用技術
+## ⚙️使用技術
 <p align="center">
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" alt="Node.js" width="60" height="60"/>
-  <img src="https://img.shields.io/badge/Node.js-18+-brightgreen?logo=node.js&logoColor=white&style=for-the-badge" />
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original.svg" alt="Go" width="60" height="60"/>
-  <img src="https://img.shields.io/badge/Go-1.20+-00ADD8?logo=go&logoColor=white&style=for-the-badge" />
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" alt="Python" width="60" height="60"/>
-  <img src="https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white&style=for-the-badge" />
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg" alt="Docker" width="60" height="60"/>
-  <img src="https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white&style=for-the-badge" />
+    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" alt="Node.js" width="60" height="60"/>
+    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original.svg" alt="Go" width="60" height="60"/>  
+    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" alt="Python" width="60" height="60"/>
+    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg" alt="Docker" width="60" height="60"/>
+    </br>
+    <img src="https://img.shields.io/badge/Node.js-18+-brightgreen?logo=node.js&logoColor=white&style=for-the-badge" />
+    <img src="https://img.shields.io/badge/Go-1.20+-00ADD8?logo=go&logoColor=white&style=for-the-badge" />
+    <img src="https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white&style=for-the-badge" />
+    <img src="https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white&style=for-the-badge" />
 </p>
 
-## 目次
+## 📔目次
 - [特徴](#特徴)
-- [動作環境](#動作環境)
+- [開発環境](#開発環境)
 - [構成](#構成)
+- [開発状況](#開発状況)
 
-## 特徴
-高速な処理
+## ✅️特徴
+複数のコンテナを用いた高速な処理が特徴
 
-## 動作環境
-dockerが満足に動かせる環境
+Nodejs,Go,Pythonのハイブリッド仕様で高速化を実現(予定)
 
-## 構成
+## 💻️開発環境
+
+<p align="center">
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/windows8/windows8-original.svg" width="48" height="48" />
+  <img src="https://upload.wikimedia.org/wikipedia/commons/8/84/Apple_Computer_Logo_rainbow.svg" width="48" height="48" />
+</p>
+
+<p align="center">
+  <b>Windows (Windows11 23H2 / Intel Core i5 12th Gen / 16 GB)</b><br/>
+  <b>macOS — MacBook Air M4</b>
+</p>
+
+
+## 📂構成
 --ここに画像が入ります--
+
+## 📊開発状況
+
+* [ ] 仕様書作成 
+* [x] デザイン完了 
+* [ ] バックエンド実装中 
+* [ ] テスト・デバッグ
