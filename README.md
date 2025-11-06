@@ -83,7 +83,7 @@ Nodejs,Go,Pythonのハイブリッド仕様で高速化を実現(予定)
 1. リポジトリを任意の場所クローンしましょう
 
 ```
- clone https://github.com/C0mmitment/Commitment_backend.git
+git clone https://github.com/C0mmitment/Commitment_backend.git
 ```
 
 2. コンテナを作成します
@@ -121,4 +121,12 @@ sudo ./init.sh
 sudo chmod -x ./init.sh
 ```
 
-* 初期設定完了！
+* 初期設定完了！ サーバーの実行は以下のコマンドで行うことができます。
+```
+sudo ./serv.sh
+```
+
+※稀にPermissionで弾かれるのでその場合は以下のコマンドを実行してください
+```
+sudo chmod -x ./serv.sh
+```
