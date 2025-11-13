@@ -128,7 +128,7 @@ func runGeminiAdviceSync(ctx context.Context, imageBytes []byte, mimeType string
 	// 認証処理 (Gemini APIはAPIキー認証)
 	client, err := genai.NewClient(ctx, option.WithAPIKey(geminiAPIKey))
 	if err != nil {
-		return "", fmt.Errorf("Geminiクライアントの作成に失敗: %w (APIキーの設定を確認してください)", err)
+		return "", fmt.Errorf("geminiクライアントの作成に失敗: %w (apiキーの設定を確認してください)", err)
 	}
 	defer client.Close()
 
@@ -149,7 +149,7 @@ func runGeminiAdviceSync(ctx context.Context, imageBytes []byte, mimeType string
 	}
 
 	if len(resp.Candidates) == 0 || len(resp.Candidates[0].Content.Parts) == 0 {
-		return "", fmt.Errorf("Gemini APIからの応答が空です")
+		return "", fmt.Errorf("gemini APIからの応答が空です")
 	}
 
 	// genai.Text に型アサーションし、そこから string に変換
@@ -157,7 +157,7 @@ func runGeminiAdviceSync(ctx context.Context, imageBytes []byte, mimeType string
 	textPart, ok := part.(genai.Text)
 
 	if !ok {
-		return "", fmt.Errorf("Gemini APIからの応答形式が予期されていません (応答がテキストではありません)")
+		return "", fmt.Errorf("gemini APIからの応答形式が予期されていません (応答がテキストではありません)")
 	}
 
 	advice := string(textPart)
