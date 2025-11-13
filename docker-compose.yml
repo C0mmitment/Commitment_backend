@@ -1,0 +1,37 @@
+version: '3.8'
+services:
+  golang:
+    container_name: c0mmit_golang
+    build: 
+      context: ./golang
+      dockerfile: dockerfile
+    working_dir: /usr/src/app
+    volumes:
+      - ./golang:/usr/src/app
+    ports:
+      - "${GO_PORT}:${GO_PORT}"
+    env_file:
+      - .env
+    tty: true
+    networks:
+      - commit_net
+
+  nodejs:
+    container_name: c0mmit_nodejs
+    build: 
+      context: ./nodejs
+      dockerfile: dockerfile
+    working_dir: /usr/src/app
+    volumes:
+      - ./nodejs:/usr/src/app
+    ports:
+      - "${NODE_PORT}:${NODE_PORT}"
+    env_file:
+      - .env
+    tty: true
+    networks:
+      - commit_net
+
+networks:
+  commit_net:
+    driver: bridge

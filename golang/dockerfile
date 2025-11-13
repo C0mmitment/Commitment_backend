@@ -1,0 +1,14 @@
+FROM golang:1.23-alpine
+
+# 必要なツールをインストール
+RUN apk update && apk add --no-cache \
+    git \
+    curl \
+    ca-certificates \
+    openssh
+
+WORKDIR /usr/src/app
+COPY start.sh /usr/local/bin/start.sh
+RUN chmod +x /usr/local/bin/start.sh
+
+CMD ["/usr/local/bin/start.sh"]
