@@ -4,7 +4,7 @@ go 1.23.12
 
 require (
 	github.com/google/generative-ai-go v0.20.1
-	github.com/gorilla/mux v1.8.1
+	github.com/labstack/echo/v4 v4.13.4
 	google.golang.org/api v0.186.0
 )
 
@@ -24,7 +24,6 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
 	github.com/googleapis/gax-go/v2 v2.12.5 // indirect
-	github.com/labstack/echo/v4 v4.13.4 // indirect
 	github.com/labstack/gommon v0.4.2 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
