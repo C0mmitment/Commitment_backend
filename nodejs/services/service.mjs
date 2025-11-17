@@ -12,7 +12,7 @@ const advice = async (base64Image, mimeType) => {
         console.log(`[app.mjs] Goサーバー (${GO_API_URL}) に画像データ (${mimeType}) を送信中...`);
 
         // Goサーバーへリクエストを送信
-        const goResponse = await axios.post(`${GO_API_URL}/analyze`, {
+        const goResponse = await axios.post(`${GO_API_URL}/advice`, {
             image_data_base64: base64Image,
             mime_type: mimeType
         });
