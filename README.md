@@ -128,3 +128,7 @@ start.command
 ```
 sudo chmod +x ./*.sh
 ``` 
+
+※Windowsの場合はstart.shの改行コードをCRLFからLFに変更してください。
+![CRLF](Docs/Resources/CRLF.png)
+![CRLF2](Docs/Resources/CRLF2.png)
