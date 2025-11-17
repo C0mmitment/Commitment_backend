@@ -89,16 +89,26 @@ git clone https://github.com/C0mmitment/Commitment_backend.git
 2. コンテナを作成します。
 * クローンしたディレクトリでPowerShellもしくはzshを開いてください。
 
-### Windows
+<br/>
+※Windowsの場合はstart.shの改行コードをCRLFからLFに変更してください。
+
+![CRLF](Docs/Resources/CRLF.png)
+![CRLF2](Docs/Resources/CRLF2.png)
+
+<br/>
+下記のコマンドを実行します。
 
 ```
-stard.bat
+docker compose up --build -d
 ```
+※もしくはコマンドライン上で
+Windowsなら``./start.bat`` Linuxなら``./start.sh`` macOSなら``./start.command``を実行してください。(内容は変わりません)
+<br/>
+<br/>
+※ビルドに失敗する場合は``docker compose up --build``で再度試し、エラー内容を確認してください。
+<br/>
 
-### MacOS
-```
-start.command
-```
+
 
 3. VSCodeでアタッチ
 
@@ -113,7 +123,7 @@ start.command
 /usr/src/app
 ```
 
-* コンテナを作成した最初は必ず、init.shを実行してください。
+* nodejsコンテナは最初に必ず、init.shを実行してください。
 ```
 ./init.sh
 ```
@@ -128,7 +138,3 @@ start.command
 ```
 sudo chmod +x ./*.sh
 ``` 
-
-※Windowsの場合はstart.shの改行コードをCRLFからLFに変更してください。
-![CRLF](Docs/Resources/CRLF.png)
-![CRLF2](Docs/Resources/CRLF2.png)
