@@ -52,7 +52,7 @@ const gathering = async (uuid,data,len) => {
 
         // Goサーバーへリクエストを送信
         const goResponse = await axios.post(`${GO_API_URL}/add_location`, {
-            uuid: uuid,
+            user_uuid: uuid,
             latitude: Result.latitude,
             longnitude: Result.longnitude,
             geohash: geohash
