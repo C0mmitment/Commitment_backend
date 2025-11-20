@@ -42,21 +42,34 @@ const gathering = async (uuid,data,len) => {
     if(!(uuid && data)) {
         return;
     }
-
     const Result = await extractGpsFromImage(data);
-
     if(Result == null) {
         return;
     }
+    const geohash = await createGeohash(Result.latitude,Result.longnitude,9);
+    try {
+        console.log(`Goサーバー (${GO_API_URL}) に送信中...`);
 
-    console.log(Result);
+        // Goサーバーへリクエストを送信
+        const goResponse = await axios.post(`${GO_API_URL}/add_location`, {
+            uuid: uuid,
+            latitude: Result.latitude,
+            longnitude: Result.longnitude,
+            geohash: geohash
+        });
+        
+        return;
 
-    const Result2 = await createGeohash(Result.latitude,Result.longnitude,len);
-
-    console.log(Result2);
-
-
-
+    } catch (error) {
+        // Axiosエラーハンドリング (Go側が500などを返した場合)
+        if (error.response) {
+            console.error('[app.mjs] Goサーバーエラーレスポンス:', error.response.data);
+            return;
+        }
+        // Goサーバーとの通信自体に失敗した場合
+        console.error('[app.mjs] Goサーバーとの通信エラー:', error.message || error);
+        return;
+    }
 }
 
 export default {
