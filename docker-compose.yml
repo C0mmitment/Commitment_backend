@@ -32,6 +32,26 @@ services:
     networks:
       - commit_net
 
+  posgredb:
+    container_name: c0mmit_posgre
+    build: 
+      context: ./posgre
+      dockerfile: dockerfile
+    platform: ${DB_PLATFORM:-linux/amd64}
+    env_file:
+      - .env
+    ports:
+      - "${POSGRE_PORT}:${DEFAULT_PSQL_PORT}"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    tty: true
+    networks:
+      - commit_net
+
 networks:
   commit_net:
     driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
