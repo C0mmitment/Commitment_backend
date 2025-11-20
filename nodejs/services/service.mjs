@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { extractGpsFromImage, createGeohash } from '../utils/utils.mjs'
+
 
 const GO_API_URL = process.env.GO_API_URL;
 
@@ -36,6 +38,28 @@ const advice = async (base64Image, mimeType) => {
     }
 }
 
+const gathering = async (uuid,data,len) => {
+    if(!(uuid && data)) {
+        return;
+    }
+
+    const Result = await extractGpsFromImage(data);
+
+    if(Result == null) {
+        return;
+    }
+
+    console.log(Result);
+
+    const Result2 = await createGeohash(Result.latitude,Result.longnitude,len);
+
+    console.log(Result2);
+
+
+
+}
+
 export default {
     advice,
+    gathering,
 }
