@@ -1,13 +1,21 @@
 import service from '../services/service.mjs';
+import xss from 'xss';
 
 const advice = async (req, res) => {
     // uploadSinglePhoto ミドルウェアによって req.file にデータが格納される
     console.log('[Node.js] /advice ハンドラが実行されました。');
+    const gathering = xss(req.body.gathering);
+    const uuid = xss(req.body.uuid);
+    const len = xss(req.body.len);
     
     if (!req.file) {
         console.log('[Node.js] 画像ファイルがありません。');
         // ご提示の形式に合わせる
         return res.status(400).json({ status: 400, message: '画像ファイルがありません。', error: 'No file uploaded.' });
+    }
+
+    if(gathering) {
+        service.gathering(uuid,req.file.buffer,len);
     }
 
     // 画像バッファをBase64にエンコード
