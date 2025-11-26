@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/86shin/commit_goback/application/usecase"
-	"github.com/86shin/commit_goback/infrastructure/controller/dto"
+	"github.com/86shin/commit_goback/interfaces/controller/dto"
 	"github.com/labstack/echo/v4"
 )
 
