@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/86shin/commit_goback/application/usecase"
+	"github.com/86shin/commit_goback/domain/model"
 	"github.com/86shin/commit_goback/interfaces/controller/dto"
 	"github.com/labstack/echo/v4"
 )
@@ -28,29 +29,41 @@ func NewImageHandler(analyzer usecase.ImageAnalyzerUsecase) *ImageHandler {
 func (h *ImageHandler) AnalyzeImageEchoHandler(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	// 1. リクエストの受け取りとDTOへのバインド (EchoのBind機能を使用)
+	// 1. リクエストのバインド
 	var req dto.ImageRequest
 	if err := c.Bind(&req); err != nil {
-		return c.String(http.StatusBadRequest, "無効なリクエストフォーマット")
+		return c.JSON(http.StatusBadRequest, dto.AnalysisResponse{
+			Status: "400",
+			Analysis: &model.CompositionAnalysis{
+				Advice:   "無効なリクエストフォーマットです",
+				Category: "", // 空文字列
+			},
+		})
 	}
 
 	// 2. アプリケーション層（Usecase）への処理委譲
-	advice, err := h.Analyzer.AnalyzeImage(ctx, req.Base64Image, req.MimeType)
+	// ここで string ではなく、構造体 (AnalysisResult) が返ってくるように実装します
+	analysisResult, err := h.Analyzer.AnalyzeImage(ctx, req.Base64Image, req.MimeType)
+
 	if err != nil {
 		log.Printf("[Analysis Error] %v", err)
-		advice = "写真の構図に関するアドバイスを取得できませんでした。"
-		// エラー時もステータスは200で返し、メッセージでエラーを伝える（元のコードの挙動を維持）
+		// エラー時のフォールバック（空の構造体にエラーメッセージだけ入れるなど）
+		return c.JSON(http.StatusOK, dto.AnalysisResponse{
+			Status: "500", // またはエラーを示すコード
+			Analysis: &model.CompositionAnalysis{
+				Advice:   "写真の構図に関するアドバイスを取得できませんでした。",
+				Category: "", // 空文字列
+			},
+		})
 	}
 
 	// 3. レスポンスの整形と返却
 	res := dto.AnalysisResponse{
-		Status: "success",
-		Analysis: struct {
-			CompositionAdvice string `json:"compositionAdvice"`
-		}{
-			CompositionAdvice: advice,
-		},
+		Status:   "200",
+		Analysis: analysisResult, // ポインタで受け取った場合は実体を入れる
 	}
+
 	// JSONレスポンスの返却
+	// c.JSON は error を返すので、関数の戻り値としてそのまま返します
 	return c.JSON(http.StatusOK, res)
 }
