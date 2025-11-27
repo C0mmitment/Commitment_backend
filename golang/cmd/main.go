@@ -21,18 +21,18 @@ func main() {
 		log.Fatalf("Fatal: GEMINI_API_KEY is not set.")
 	}
 
-	dbPortStr := os.Getenv("POSGRE_PORT")
+	dbPortStr := os.Getenv("POSTGRES_PORT")
 	dbPort, err := strconv.Atoi(dbPortStr)
 	if err != nil {
 		log.Fatalf("環境変数 DB_PORT の値が無効です: %v", err)
 	}
 
 	cfg := posgres.DBConfig{
-		Host:     os.Getenv("DB_HOST"),
+		Host:     os.Getenv("POSTGRES_HOST"),
 		Port:     dbPort,
-		User:     os.Getenv("DB_USER"),
-		Password: os.Getenv("DB_PASSWORD"),
-		DBName:   os.Getenv("DB_NAME"),
+		User:     os.Getenv("POSTGRES_USER"),
+		Password: os.Getenv("POSTGRES_PASSWORD"),
+		DBName:   os.Getenv("POSTGRES_DB"),
 	}
 	posgresDB, err := posgres.NewPosgresDB(cfg)
 	if err != nil {

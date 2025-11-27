@@ -60,6 +60,8 @@ const gathering = async (uuid,data,len) => {
             geohash: geohash
         });
         
+        console.log(goResponse.status);
+        console.log(goResponse.message);
         return;
 
     } catch (error) {
