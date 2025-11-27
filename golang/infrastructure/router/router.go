@@ -18,11 +18,14 @@ type RouterConfig struct {
 func NewRouter(cfg RouterConfig) *echo.Echo {
 	e := echo.New()
 
+	v1 := e.Group("/v1")
+	api := v1.Group("/api")
+	location := api.Group("/location")
 	// --- 既存の画像分析ルート ---
-	e.POST("/advice", cfg.ImageHandler.AnalyzeImageEchoHandler)
+	api.POST("/advice", cfg.ImageHandler.AnalyzeImageEchoHandler)
 
 	// --- 画像位置情報追加ルート ---
-	e.POST("/location/add", cfg.LocationController.AddImgLocation)
+	location.POST("/add", cfg.LocationController.AddImgLocation)
 	// --- ユーザー関連ルートの準備（将来用） ---
 	// User機能追加時に、以下を適切なコントローラーメソッドに置き換えます。
 	e.GET("/users", dummyUserListEchoHandler)
