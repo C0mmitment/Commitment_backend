@@ -1,5 +1,7 @@
 import axios from 'axios';
 import { extractGpsFromImage, createGeohash } from '../utils/utils.mjs'
+import { stat } from 'fs';
+import { resourceUsage } from 'process';
 
 
 const GO_API_URL = process.env.GO_API_URL;
@@ -51,7 +53,7 @@ const gathering = async (uuid,data,len) => {
         console.log(`Goサーバー (${GO_API_URL}) に送信中...`);
 
         // Goサーバーへリクエストを送信
-        const goResponse = await axios.post(`${GO_API_URL}/add_location`, {
+        const goResponse = await axios.post(`${GO_API_URL}/location/add`, {
             user_uuid: uuid,
             latitude: Result.latitude,
             longnitude: Result.longnitude,
@@ -72,7 +74,25 @@ const gathering = async (uuid,data,len) => {
     }
 }
 
+const deleteLocationData = async (uuid) => {
+    try {
+        const goResponse = await axios.post(`${GO_API_URL}/location/delete`, {
+            uuid: uuid,
+        });
+
+        if(goResponse.status === 200) {
+            return {status:200, message:'削除に成功しました'};
+        } else {
+            return {status:500, message:'削除に失敗しました'}
+        }
+
+    } catch {
+        return {status: 500, error:'いたーなるーさばーえーら'}
+    }
+}
+
 export default {
     advice,
     gathering,
+    deleteLocationData,
 }

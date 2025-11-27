@@ -10,5 +10,6 @@ middle.post('/advice', uploadSinglePhoto, handler.advice);
 
 router.use('/v1', v1);
 v1.use('/middle', middle);
+v1.get('/deleteLocationData/:uuid',handler.deleteLocationData)
 
 export default router;
