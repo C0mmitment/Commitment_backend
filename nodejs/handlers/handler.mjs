@@ -42,6 +42,20 @@ const advice = async (req, res) => {
     }
 }
 
+const deleteLocationData = async (req,res) => {
+    const uuid = xss(req.params.uuid);
+    console.log('データ削除:',uuid);
+
+    const result = await service.deleteLocationData(uuid);
+
+    res.status(result.status).json({
+        status: result.status,
+        message: result.message,
+        error: result.error || 'Unknown error'
+    });
+}
+
 export default {
     advice,
+    deleteLocationData,
 }
