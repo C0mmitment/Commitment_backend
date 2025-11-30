@@ -40,7 +40,7 @@ const advice = async (base64Image, mimeType) => {
     }
 }
 
-const gathering = async (uuid,data,len) => {
+const gathering = async (uuid,data) => {
     if(!(uuid && data)) {
         return;
     }
@@ -51,7 +51,6 @@ const gathering = async (uuid,data,len) => {
     const geohash = await createGeohash(Result.latitude,Result.longnitude,9);
     try {
         console.log(`Goサーバー (${GO_API_URL}) に送信中...`);
-
         // Goサーバーへリクエストを送信
         const goResponse = await axios.post(`${GO_API_URL}/location/add`, {
             user_uuid: uuid,

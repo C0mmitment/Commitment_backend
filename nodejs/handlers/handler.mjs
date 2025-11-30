@@ -4,9 +4,8 @@ import xss from 'xss';
 const advice = async (req, res) => {
     // uploadSinglePhoto ミドルウェアによって req.file にデータが格納される
     console.log('[Node.js] /advice ハンドラが実行されました。');
-    const gathering = xss(req.body.gathering);
+    const gathering = xss(req.body.gathering); // 位置情報を登録する許可の有無
     const uuid = xss(req.body.uuid);
-    const len = xss(req.body.len);
     
     if (!req.file) {
         console.log('[Node.js] 画像ファイルがありません。');
@@ -15,7 +14,7 @@ const advice = async (req, res) => {
     }
 
     if(gathering) {
-        service.gathering(uuid,req.file.buffer,len);
+        service.gathering(uuid,req.file.buffer);
     }
 
     // 画像バッファをBase64にエンコード

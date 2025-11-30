@@ -18,10 +18,11 @@ func main() {
 	// 1. 環境変数のチェック
 	geminiAPIKey := os.Getenv("GEMINI_API_KEY")
 	if geminiAPIKey == "" {
-		log.Fatalf("Fatal: GEMINI_API_KEY is not set.")
+		log.Fatalf("致命的: GEMINI_API_KEYがありません。")
 	}
 
-	dbPortStr := os.Getenv("POSTGRES_PORT")
+	dbPortStr := os.Getenv("DEFAULT_PSQL_PORT")
+	// log.Printf("DB Port: %s", dbPortStr)
 	dbPort, err := strconv.Atoi(dbPortStr)
 	if err != nil {
 		log.Fatalf("環境変数 DB_PORT の値が無効です: %v", err)
@@ -45,7 +46,7 @@ func main() {
 	// userRepo := repository.NewUserRepository()
 
 	// インフラ層の実装 (Gemini)
-	aiConnectorImpl := gemini.NewGeminiAIService(geminiAPIKey)
+	aiConnectorImpl, _ := gemini.NewGeminiAIService(geminiAPIKey)
 	addImgLocImpl := persistence.NewLocationRepositoryImpl(posgresDB)
 
 	// アプリケーション層のサービス
