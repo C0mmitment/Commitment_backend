@@ -9,6 +9,14 @@ RUN apk update && apk add --no-cache \
 
 WORKDIR /usr/src/app
 
+# 依存関係（package.json）を先にコピーしてインストール
+# (もし package.json がまだないなら、ここはコメントアウトでもOKですが、通常は必要です)
+COPY package*.json ./
+RUN npm install
+
+# ソースコードをすべてコンテナの中にコピーする
+COPY . .
+
 # スクリプトをコピーして実行権限を付与
 COPY start.sh /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh

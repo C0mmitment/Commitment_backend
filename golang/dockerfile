@@ -8,6 +8,15 @@ RUN apk update && apk add --no-cache \
     openssh
 
 WORKDIR /usr/src/app
+
+# Goの依存関係ファイルを先にコピー
+# (go.mod がある場合)
+COPY go.mod go.sum ./
+RUN go mod download
+
+# ソースコードをすべてコンテナの中にコピーする
+COPY . .
+
 COPY start.sh /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh
 

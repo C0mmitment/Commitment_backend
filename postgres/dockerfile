@@ -1,3 +1,4 @@
 # 軽量なAlpine版のPostgreSQLイメージを使用
 FROM postgis/postgis:16-3.4
 
+COPY schema.sql /docker-entrypoint-initdb.d/
