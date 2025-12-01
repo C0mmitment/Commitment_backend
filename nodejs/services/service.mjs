@@ -92,8 +92,27 @@ const deleteLocationData = async (uuid) => {
     }
 }
 
+const getHeatmapData = async (min_lat, min_lon, max_lat, max_lon) => {
+    if (!GO_API_URL) {
+        return { status: 500, message: 'サーバー内部の設定エラーです。', error: 'GO_API_URL is not set' };
+    }
+
+    const geoParams = { geoParams: { min_lat, min_lon, max_lat, max_lon } };
+
+    try {
+        const goResponse = await axios.get(`${GO_API_URL}/location/heatmap`, { params: geoParams });
+        return { status: 200, data: goResponse.data };
+    } catch (error) {
+        if (error.response) {
+            return { status: error.response.status, message: 'Goサーバーでの処理中にエラーが発生', error: error.response.data };
+        }
+        return { status: 500, message: 'Goサーバーとの通信に失敗しました', error: error.message };
+    }
+}
+
 export default {
     advice,
     gathering,
     deleteLocationData,
+    getHeatmapData,
 }

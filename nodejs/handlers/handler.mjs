@@ -54,7 +54,28 @@ const deleteLocationData = async (req,res) => {
     });
 }
 
+const heatmapData = async (req, res) => {
+    try {
+        const min_lat = xss(req.query.min_lat);
+        const min_lon = xss(req.query.min_lon);
+        const max_lat = xss(req.query.max_lat);
+        const max_lon = xss(req.query.max_lon);
+
+        if (!min_lat || !min_lon || !max_lat || !max_lon) {
+            return res.status(400).json({ status: 400, message: '必要なパラメータが不足しています。' });
+        }
+
+        const result = await service.getHeatmapData(min_lat, min_lon, max_lat, max_lon);
+
+        res.status(result.status).json(result.data || { message: result.message, error: result.error });
+    } catch (error) {
+        console.error('[handler.js] heatmapData エラー:', error.message);
+        res.status(500).json({ status: 500, message: '内部サーバーエラー', error: error.message });
+    }
+}
+
 export default {
     advice,
     deleteLocationData,
+    heatmapData,
 }
