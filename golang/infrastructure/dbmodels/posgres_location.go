@@ -7,7 +7,7 @@ import (
 )
 
 // DBLocation: データベーステーブルの構造を反映したモデル
-type DBLocation struct {
+type DBAddLocation struct {
 	LocationId uuid.UUID `db:"location_id"`
 	UserId     uuid.UUID `db:"user_id"`
 	Latitude   float64   `db:"latitude"`
