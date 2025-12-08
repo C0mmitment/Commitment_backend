@@ -16,3 +16,12 @@ func NewGegerateUuid() (uuid.UUID, error) {
 
 	return u7, nil
 }
+
+func ValidateTableName(name string) bool {
+	switch name {
+	case "photo_locations":
+		return true
+	default:
+		return false
+	}
+}

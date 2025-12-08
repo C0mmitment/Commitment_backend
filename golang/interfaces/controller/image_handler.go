@@ -36,14 +36,14 @@ func (h *ImageHandler) AnalyzeImageEchoHandler(c echo.Context) error {
 			Status: "400",
 			Analysis: &model.CompositionAnalysis{
 				Advice:   "無効なリクエストフォーマットです",
-				Category: "", // 空文字列
+				Category: req.Category, // 空文字列
 			},
 		})
 	}
 
 	// 2. アプリケーション層（Usecase）への処理委譲
 	// ここで string ではなく、構造体 (AnalysisResult) が返ってくるように実装します
-	analysisResult, err := h.Analyzer.AnalyzeImage(ctx, req.Base64Image, req.MimeType)
+	analysisResult, err := h.Analyzer.AnalyzeImage(ctx, req.Category, req.Base64Image, req.MimeType)
 
 	if err != nil {
 		log.Printf("[Analysis Error] %v", err)
@@ -52,7 +52,7 @@ func (h *ImageHandler) AnalyzeImageEchoHandler(c echo.Context) error {
 			Status: "500", // またはエラーを示すコード
 			Analysis: &model.CompositionAnalysis{
 				Advice:   "写真の構図に関するアドバイスを取得できませんでした。",
-				Category: "", // 空文字列
+				Category: req.Category, // 空文字列
 			},
 		})
 	}

@@ -48,14 +48,14 @@ const gathering = async (uuid,data) => {
     if(Result == null) {
         return;
     }
-    const geohash = await createGeohash(Result.latitude,Result.longnitude,9);
+    const geohash = await createGeohash(Result.latitude,Result.longitude,9);
     try {
         console.log(`Goサーバー (${GO_API_URL}) に送信中...`);
         // Goサーバーへリクエストを送信
         const goResponse = await axios.post(`${GO_API_URL}/location/add`, {
             user_uuid: uuid,
             latitude: Result.latitude,
-            longnitude: Result.longnitude,
+            longitude: Result.longitude,
             geohash: geohash
         });
         
@@ -97,7 +97,7 @@ const getHeatmapData = async (min_lat, min_lon, max_lat, max_lon) => {
         return { status: 500, message: 'サーバー内部の設定エラーです。', error: 'GO_API_URL is not set' };
     }
 
-    const geoParams = { geoParams: { min_lat, min_lon, max_lat, max_lon } };
+    const geoParams = { min_lat, min_lon, max_lat, max_lon };
 
     try {
         const goResponse = await axios.get(`${GO_API_URL}/location/heatmap`, { params: geoParams });

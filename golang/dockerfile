@@ -1,3 +1,4 @@
+# FROM golang:1.23-alpine as develop
 FROM golang:1.23-alpine
 
 # 必要なツールをインストール
@@ -11,13 +12,42 @@ WORKDIR /usr/src/app
 
 # Goの依存関係ファイルを先にコピー
 # (go.mod がある場合)
-COPY go.mod go.sum ./
-RUN go mod download
+# COPY go.mod go.sum ./
+# RUN go mod download
 
 # ソースコードをすべてコンテナの中にコピーする
-COPY . .
+# COPY . .
 
 COPY start.sh /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh
 
 CMD ["/usr/local/bin/start.sh"]
+
+
+# FROM golang:1.23-alpine as builder
+
+# WORKDIR /usr/src/app
+
+# COPY go.mod go.sum ./
+# RUN go mod download
+
+# COPY . .
+
+# # ★重要: Distrolessで動かすために CGO を無効化してビルド
+# RUN CGO_ENABLED=0 GOOS=linux go build -o /commit-server .
+
+# FROM gcr.io/distroless/static-debian12:nonroot as runner
+
+# WORKDIR /
+
+# # ビルドしたバイナリだけをコピー
+# COPY --from=builder /commit-server .
+
+# # ポートなどの公開が必要であれば記述（ドキュメント用）
+# # EXPOSE 8080
+
+# # rootではなくnonrootユーザーとして実行
+# USER nonroot:nonroot
+
+# # シェルがないので直接バイナリを指定
+# CMD ["/commit-server"]
