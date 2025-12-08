@@ -1,6 +1,5 @@
 package model
 
-// Geminiの解析結果を表すドメインモデル
 type CompositionAnalysis struct {
 	Advice     string      `json:"advice"`
 	Category   string      `json:"category"`

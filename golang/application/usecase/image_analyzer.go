@@ -11,7 +11,7 @@ import (
 
 // ImageAnalyzerUsecase はコントローラーが依存するインターフェース
 type ImageAnalyzerUsecase interface {
-	AnalyzeImage(ctx context.Context, base64Image, mimeType string) (*model.CompositionAnalysis, error)
+	AnalyzeImage(ctx context.Context, category, base64Image, mimeType string) (*model.CompositionAnalysis, error)
 }
 
 // ImageAnalyzer は Usecase の実装構造体
@@ -24,7 +24,7 @@ func NewImageAnalyzer(connector service.AIConnector) *ImageAnalyzer {
 }
 
 // AnalyzeImage は画像分析のビジネスロジック（ユースケース）を実行します。
-func (a *ImageAnalyzer) AnalyzeImage(ctx context.Context, base64Image, mimeType string) (*model.CompositionAnalysis, error) {
+func (a *ImageAnalyzer) AnalyzeImage(ctx context.Context, category, base64Image, mimeType string) (*model.CompositionAnalysis, error) {
 	// 1. エンコーディング/変換ロジック (ここではBase64デコード)
 	imageBytes, err := base64.StdEncoding.DecodeString(base64Image)
 	if err != nil {
@@ -32,7 +32,7 @@ func (a *ImageAnalyzer) AnalyzeImage(ctx context.Context, base64Image, mimeType 
 	}
 
 	// 2. ドメイン層の抽象化されたコネクタを使って処理を実行
-	advice, err := a.Connector.GetCompositionAdvice(ctx, imageBytes, mimeType)
+	advice, err := a.Connector.GetCompositionAdvice(ctx, category, imageBytes, mimeType)
 	if err != nil {
 		return &model.CompositionAnalysis{}, fmt.Errorf("AIコネクタ処理エラー: %w", err)
 	}

@@ -4,7 +4,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type Location struct {
+type AddLocation struct {
 	LocationId uuid.UUID
 	UserId     uuid.UUID
 	Lat        float64
