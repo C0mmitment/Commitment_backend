@@ -25,3 +25,13 @@ func ValidateTableName(name string) bool {
 		return false
 	}
 }
+
+func ValidateLatLng(lat, lng float64) error {
+	if lat < -90 || lat > 90 {
+		return fmt.Errorf("invalid latitude: %f", lat)
+	}
+	if lng < -180 || lng > 180 {
+		return fmt.Errorf("invalid longitude: %f", lng)
+	}
+	return nil
+}

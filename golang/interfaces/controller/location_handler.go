@@ -28,7 +28,7 @@ func (h *LocationHandler) AddImgLocation(c echo.Context) error {
 		}
 		return c.JSON(http.StatusBadRequest, res)
 	}
-	location, err := h.Location.AddLocationUsecase(ctx, req.UserId, req.Lat, req.Lng, req.Geo)
+	err := h.Location.AddLocationUsecase(ctx, req.UserId, req.Lat, req.Lng, req.Geo)
 	if err != nil {
 		res := dto.AddLocationResponse{
 			Status:  "500",
@@ -39,7 +39,7 @@ func (h *LocationHandler) AddImgLocation(c echo.Context) error {
 	}
 	res := dto.AddLocationResponse{
 		Status:  "200",
-		Message: location,
+		Message: "画像位置情報の追加処理完了",
 	}
 	return c.JSON(http.StatusOK, res)
 }
