@@ -4,28 +4,22 @@
 ## ⚙️使用技術
 <p align="center">
     <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" alt="Node.js" width="60" height="60"/>
-    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original.svg" alt="Go" width="60" height="60"/>  
-    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" alt="Python" width="60" height="60"/>
+    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original.svg" alt="Go" width="60" height="60"/>
     <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg" alt="Docker" width="60" height="60"/>
     </br>
     <img src="https://img.shields.io/badge/Node.js-18+-brightgreen?logo=node.js&logoColor=white&style=for-the-badge" />
     <img src="https://img.shields.io/badge/Go-1.20+-00ADD8?logo=go&logoColor=white&style=for-the-badge" />
-    <img src="https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white&style=for-the-badge" />
     <img src="https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white&style=for-the-badge" />
 </p>
 
 ### その他
 
 <p align="center">
-    <img src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white&style=for-the-badge" />
     <img src="https://img.shields.io/badge/Echo-00ADD8?logo=go&logoColor=white&style=for-the-badge" />
     <img src="https://img.shields.io/badge/Express-000000?logo=express&logoColor=white&style=for-the-badge" />
-    <img src="https://img.shields.io/badge/Vision%20AI-4285F4?logo=googlecloud&logoColor=white&style=for-the-badge" />
-    <img src="https://img.shields.io/badge/NIMA-9C27B0?logo=ai&logoColor=white&style=for-the-badge" />
     <img src="https://img.shields.io/badge/GCP-4285F4?logo=googlecloud&logoColor=white&style=for-the-badge" />
-    <img src="https://img.shields.io/badge/ChatGPT-74aa9c?logo=openai&logoColor=white&style=for-the-badge" />
     <img src="https://img.shields.io/badge/Gemini-4285F4?logo=google&logoColor=white&style=for-the-badge" />
-    <img src="https://img.shields.io/badge/GitHub%20Copilot-000000?logo=githubcopilot&logoColor=white&style=for-the-badge" />
+    <img src="https://img.shields.io/badge/Github Actions-black?logo=GitHub&logoColor=white&style=for-the-badge" />
 </p>
 
 
