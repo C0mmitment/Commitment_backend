@@ -6,7 +6,7 @@ import { resourceUsage } from 'process';
 
 const GO_API_URL = process.env.GO_API_URL;
 
-const advice = async (base64Image, mimeType) => {
+const advice = async (base64Image, mimeType, category) => {
     if (!GO_API_URL) {
         console.error('[app.mjs] エラー: GO_API_URL 環境変数が設定されていません。');
         return { status: 500, message: 'サーバー内部の設定エラーです。', error: 'GO_API_URL is not set' };
@@ -18,7 +18,8 @@ const advice = async (base64Image, mimeType) => {
         // Goサーバーへリクエストを送信
         const goResponse = await axios.post(`${GO_API_URL}/advice`, {
             image_data_base64: base64Image,
-            mime_type: mimeType
+            mime_type: mimeType,
+            category: category
         });
         
         // 成功時のレスポンス
