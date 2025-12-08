@@ -32,9 +32,9 @@ func NewLocationRepositoryImpl(db *sql.DB) repository.LocationRepojitory {
 	}
 }
 
-func (p *LocationrepositoryImpl) AdditionImageLocation(ctx context.Context, loc *model.AddLocation) (string, error) {
+func (p *LocationrepositoryImpl) AdditionImageLocation(ctx context.Context, loc *model.AddLocation) error {
 	if !utils.ValidateTableName(p.TableName) {
-		return "", fmt.Errorf("不正なテーブル名です")
+		return fmt.Errorf("不正なテーブル名です")
 	}
 
 	dbLoc := dbmodels.DBAddLocation{
@@ -49,8 +49,12 @@ func (p *LocationrepositoryImpl) AdditionImageLocation(ctx context.Context, loc 
 	query := fmt.Sprintf(`
 		INSERT INTO %s
 		(location_id, user_id, latitude, longitude, geohash, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6)
-		`, p.TableName)
+		VALUES (
+			$1, $2, $3, $4,
+			ST_SetSRID(ST_MakePoint($4, $3), 4326),
+			$5, $6
+		)
+	`, p.TableName)
 
 	// 2. データベース操作の実行
 	_, err := p.Client.ExecContext(
@@ -66,11 +70,11 @@ func (p *LocationrepositoryImpl) AdditionImageLocation(ctx context.Context, loc 
 
 	if err != nil {
 		// エラーが発生した場合、文脈情報（PostgreSQLへの保存）を付与してラップし、上位層に返す。
-		return "", fmt.Errorf("位置情報データの保存に失敗しました: %w", err)
+		return fmt.Errorf("位置情報データの保存に失敗しました: %w", err)
 	}
 
 	// 4. 成功時
-	return "画像位置情報の追加処理が完了しました", nil
+	return nil
 }
 
 func (p *LocationrepositoryImpl) GetHeatmapLocation(ctx context.Context, minLat, minLon, maxLat, maxLon float64) ([]*model.HeatmapPoint, error) {
@@ -80,14 +84,12 @@ func (p *LocationrepositoryImpl) GetHeatmapLocation(ctx context.Context, minLat,
 	// 1. SQLの準備
 	// インデックス定義と全く同じ ST_SetSRID(...) を書くのが高速化のキモです
 	query := fmt.Sprintf(`
-        SELECT latitude, longitude
-        FROM %s
-        WHERE
-            ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)
-            && 
-            ST_MakeEnvelope($1, $2, $3, $4, 4326)
-        LIMIT 10000;
-    `, p.TableName)
+    	SELECT latitude, longitude
+    	FROM %s
+    	WHERE
+        geom && ST_MakeEnvelope($1, $2, $3, $4, 4326)
+    	LIMIT 10000;
+	`, p.TableName)
 
 	rows, err := p.Client.QueryContext(ctx, query, minLon, minLat, maxLon, maxLat)
 	if err != nil {

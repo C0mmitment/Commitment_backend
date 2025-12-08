@@ -6,6 +6,7 @@ const advice = async (req, res) => {
     console.log('[Node.js] /advice ハンドラが実行されました。');
     const gathering = xss(req.body.gathering); // 位置情報を登録する許可の有無
     const uuid = xss(req.body.uuid);
+    const category = xss(req.body.category);
     
     if (!req.file) {
         console.log('[Node.js] 画像ファイルがありません。');
@@ -24,7 +25,7 @@ const advice = async (req, res) => {
     console.log(`[Node.js] サービス層 (advice) を呼び出します...`);
 
     // サービス層の関数を呼び出す (try...catch はサービス層が担当)
-    const result = await service.advice(base64Image, mimeType);
+    const result = await service.advice(base64Image, mimeType, category);
 
     // サービス層からの結果(result.status)に基づいてレスポンスを返す
     if (result.status === 200) {

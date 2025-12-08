@@ -4,17 +4,17 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/86shin/commit_goback/domain/model"
 	"github.com/86shin/commit_goback/domain/repository"
 	"github.com/86shin/commit_goback/domain/utils"
 
-	// "github.com/86shin/commit_goback/interfaces/controller/dto"
 	"github.com/google/uuid"
 )
 
 type AdditionLocationUsecase interface {
-	AddLocationUsecase(ctx context.Context, user_uuid uuid.UUID, lag float64, lng float64, geo string) (string, error)
+	AddLocationUsecase(ctx context.Context, user_uuid uuid.UUID, lag float64, lng float64, geo string) error
 	GetHeatmapUsecase(ctx context.Context, minLat, minLon, maxLat, maxLon float64) ([]*model.HeatmapPoint, error)
 }
 
@@ -26,33 +26,36 @@ func NewAdditionLocation(heat_loc repository.LocationRepojitory) *HeatmapsLocati
 	return &HeatmapsLocation{HeatmapLocation: heat_loc}
 }
 
-func (h *HeatmapsLocation) AddLocationUsecase(ctx context.Context, user_id uuid.UUID, lat, lng float64, geohash string) (string, error) {
-	LUuuid, err := utils.NewGegerateUuid()
-	if LUuuid == uuid.Nil || err != nil {
-		return "", err
+func (h *HeatmapsLocation) AddLocationUsecase(ctx context.Context, user_id uuid.UUID, lat, lng float64, geohash string) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	if err := utils.ValidateLatLng(lat, lng); err != nil {
+		return fmt.Errorf("無効な座標: 最小値が最大値より大きいです")
 	}
 
-	locationEntity := model.AddLocation{
-		LocationId: LUuuid,
-		UserId:     user_id,
-		Lat:        lat,
-		Lng:        lng,
-		Geo:        geohash,
-	}
+	locationEntity, _ := model.NewAddLocation(user_id, lat, lng, geohash)
 
-	savelocation, err := h.HeatmapLocation.AdditionImageLocation(ctx, &locationEntity)
+	err := h.HeatmapLocation.AdditionImageLocation(ctx, &locationEntity)
 	if err != nil {
 		// 1. ログに出力 (重要: 詳細なエラー情報とスタックトレースを記録)
 		log.Printf("ERROR: 位置情報の追加ユースケースでリポジトリ呼び出し中に失敗: %v", err)
 		//    元のエラー情報を隠蔽し、上位層には「内部エラー」として伝える
-		return "", fmt.Errorf("画像位置情報追加処理の実行に失敗しました: %w", err)
+		return fmt.Errorf("画像位置情報追加処理の実行に失敗しました: %w", err)
 	}
-	return savelocation, nil
+	return nil
 }
 
 func (h *HeatmapsLocation) GetHeatmapUsecase(ctx context.Context, minLat, minLon, maxLat, maxLon float64) ([]*model.HeatmapPoint, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
 	// 「最小値が最大値より大きい」などの矛盾があれば、DBに問い合わせる前にエラーを返す
-	if minLat > maxLat || minLon > maxLon {
+	if err := utils.ValidateLatLng(minLat, minLon); err != nil {
+		return nil, fmt.Errorf("無効な座標: 最小値が最大値より大きいです")
+	}
+
+	if err := utils.ValidateLatLng(maxLat, maxLon); err != nil {
 		return nil, fmt.Errorf("無効な座標: 最小値が最大値より大きいです")
 	}
 

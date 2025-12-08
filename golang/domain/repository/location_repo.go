@@ -8,6 +8,6 @@ import (
 )
 
 type LocationRepojitory interface {
-	AdditionImageLocation(ctx context.Context, loc *model.AddLocation) (string, error)
+	AdditionImageLocation(ctx context.Context, loc *model.AddLocation) error
 	GetHeatmapLocation(ctx context.Context, minLat, minLon, maxLat, maxLon float64) ([]*model.HeatmapPoint, error)
 }
