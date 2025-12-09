@@ -11,6 +11,7 @@ import (
 	"github.com/86shin/commit_goback/domain/repository"
 	"github.com/86shin/commit_goback/domain/utils"
 	"github.com/86shin/commit_goback/infrastructure/dbmodels"
+	"github.com/google/uuid"
 )
 
 // データベース接続クライアントのラッパー
@@ -116,4 +117,21 @@ func (p *LocationrepositoryImpl) GetHeatmapLocation(ctx context.Context, minLat,
 	}
 
 	return locations, nil
+}
+
+func (p *LocationrepositoryImpl) DeleteHeatmapLocation(ctx context.Context, user_id uuid.UUID) error {
+	if !utils.ValidateTableName(p.TableName) {
+		return fmt.Errorf("不正なテーブル名です")
+	}
+
+	query := fmt.Sprintf("DELETE FROM %s WHERE user_id = $1", p.TableName)
+
+	// 3. 実行
+	// ExecContextを使います（SELECTではないのでQueryContextではありません）
+	_, err := p.Client.ExecContext(ctx, query, user_id)
+	if err != nil {
+		return fmt.Errorf("位置情報の削除に失敗しました: %w", err)
+	}
+
+	return nil
 }
