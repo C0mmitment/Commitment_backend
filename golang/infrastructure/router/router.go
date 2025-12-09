@@ -27,6 +27,7 @@ func NewRouter(cfg RouterConfig) *echo.Echo {
 	// --- 画像位置情報追加ルート ---
 	location.POST("/add", cfg.LocationController.AddImgLocation)
 	location.GET("/heatmap", cfg.LocationController.GetHeatmapData)
+	location.GET("/delete", cfg.LocationController.DeleteHeatmap)
 	// --- ユーザー関連ルートの準備（将来用） ---
 	// User機能追加時に、以下を適切なコントローラーメソッドに置き換えます。
 	e.GET("/users", dummyUserListEchoHandler)

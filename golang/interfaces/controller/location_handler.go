@@ -85,3 +85,34 @@ func (h *LocationHandler) GetHeatmapData(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, response)
 }
+
+func (h *LocationHandler) DeleteHeatmap(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	var req dto.DeleteHeatmapRequest
+	if err := c.Bind(&req); err != nil {
+		res := dto.DeleteHeatmapResponse{
+			Status:  "400",
+			Message: "無効なリクエストフォーマット",
+			Error:   err.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+
+	err := h.Location.DeleteHeatmapUsecase(ctx, req.UserId)
+	if err != nil {
+		res := dto.DeleteHeatmapResponse{
+			Status:  "500",
+			Message: "ヒートマップデータの削除失敗",
+			Error:   err.Error(),
+		}
+		return c.JSON(http.StatusInternalServerError, res)
+	}
+
+	response := dto.DeleteHeatmapResponse{
+		Status:  "200",
+		Message: "ヒートマップデータの削除成功",
+	}
+
+	return c.JSON(http.StatusOK, response)
+}
