@@ -16,6 +16,7 @@ import (
 type AdditionLocationUsecase interface {
 	AddLocationUsecase(ctx context.Context, user_uuid uuid.UUID, lag float64, lng float64, geo string) error
 	GetHeatmapUsecase(ctx context.Context, minLat, minLon, maxLat, maxLon float64) ([]*model.HeatmapPoint, error)
+	DeleteHeatmapUsecase(ctx context.Context, user_id uuid.UUID) error
 }
 
 type HeatmapsLocation struct {
@@ -68,4 +69,16 @@ func (h *HeatmapsLocation) GetHeatmapUsecase(ctx context.Context, minLat, minLon
 	// 3. データ加工が必要ならここで行う
 	// 今回はそのまま返すだけでOK
 	return getHeatmap, nil
+}
+
+func (h *HeatmapsLocation) DeleteHeatmapUsecase(ctx context.Context, user_id uuid.UUID) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	err := h.HeatmapLocation.DeleteHeatmapLocation(ctx, user_id)
+	if err != nil {
+		return fmt.Errorf("ヒートマップデータをdbから削除するのに失敗しました")
+	}
+
+	return nil
 }
