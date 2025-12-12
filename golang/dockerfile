@@ -1,53 +1,67 @@
-# FROM golang:1.23-alpine as develop
-FROM golang:1.23-alpine
+# syntax=docker/dockerfile:1
+# ↑ これを先頭に書くことでBuildKitの最新機能（キャッシュマウントなど）を有効化
 
-# 必要なツールをインストール
-RUN apk update && apk add --no-cache \
-    git \
-    curl \
-    ca-certificates \
-    openssh
+# ==============================================================================
+# ▼ developステージ
+# ==============================================================================
+FROM golang:1.23-alpine AS develop
+
+# apkのキャッシュも活用して高速化
+RUN --mount=type=cache,target=/var/cache/apk \
+    apk update && apk add --no-cache git curl ca-certificates openssh
 
 WORKDIR /usr/src/app
 
-# Goの依存関係ファイルを先にコピー
-# (go.mod がある場合)
-# COPY go.mod go.sum ./
-# RUN go mod download
+COPY go.mod go.sum ./
+# Goモジュールキャッシュをマウント（再ダウンロード防止）
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go mod download
 
-# ソースコードをすべてコンテナの中にコピーする
-# COPY . .
-
+COPY . .
 COPY start.sh /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh
 
 CMD ["/usr/local/bin/start.sh"]
 
 
-# FROM golang:1.23-alpine as builder
+# ==============================================================================
+# ▼ builderステージ
+# ==============================================================================
+FROM golang:1.23-alpine AS builder
 
-# WORKDIR /usr/src/app
+WORKDIR /usr/src/app
 
-# COPY go.mod go.sum ./
-# RUN go mod download
+COPY go.mod go.sum ./
 
-# COPY . .
+# モジュールキャッシュを使ってダウンロード
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go mod download
 
-# # ★重要: Distrolessで動かすために CGO を無効化してビルド
-# RUN CGO_ENABLED=0 GOOS=linux go build -o /commit-server .
+COPY . .
 
-# FROM gcr.io/distroless/static-debian12:nonroot as runner
+# ビルドキャッシュ(/root/.cache/go-build)をマウントして、コンパイル時間を短縮
+# -ldflags="-s -w": デバッグ情報を削除して軽量化
+# -trimpath: ファイルパス情報を削除してセキュリティ向上
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/go/pkg/mod \
+    CGO_ENABLED=0 GOOS=linux go build \
+    -ldflags="-s -w" \
+    -trimpath \
+    -o /commit-server \
+    ./cmd/main.go
 
-# WORKDIR /
 
-# # ビルドしたバイナリだけをコピー
-# COPY --from=builder /commit-server .
+# ==============================================================================
+# ▼ runnerステージ
+# ==============================================================================
+FROM gcr.io/distroless/static-debian12:nonroot AS runner
 
-# # ポートなどの公開が必要であれば記述（ドキュメント用）
-# # EXPOSE 8080
+WORKDIR /usr/src/app
 
-# # rootではなくnonrootユーザーとして実行
-# USER nonroot:nonroot
+# バイナリをWORKDIR内に配置（パスを揃える）
+COPY --from=builder /commit-server ./commit-server
 
-# # シェルがないので直接バイナリを指定
-# CMD ["/commit-server"]
+USER nonroot:nonroot
+
+# カレントディレクトリのバイナリを実行
+CMD ["./commit-server"]

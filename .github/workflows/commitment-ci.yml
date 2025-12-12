@@ -1,6 +1,5 @@
 name: Build and Push Docker Images
 
-# mainブランチにpushされたら実行する
 on:
   push:
     branches:
@@ -10,45 +9,41 @@ jobs:
   build-push:
     runs-on: ubuntu-latest
     steps:
-      # 1. コードを取ってくる
+      # 1. コードのチェックアウト
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Docker Hubにログインする
+      # 2. Docker Hubへのログイン
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 3. Docker Buildxのセットアップ（ビルド高速化のため）
+      # 3. Docker Buildxのセットアップ (キャッシュ機能を使うために必須)
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # 4. Node.jsイメージのビルドとプッシュ
+      # 4. Node.jsイメージのビルド & プッシュ
       - name: Build and push Node.js
         uses: docker/build-push-action@v5
         with:
-          context: ./nodejs  # nodejsフォルダの中身を使う
-          file: ./nodejs/dockerfile
+          context: ./nodejs
+          file: ./nodejs/Dockerfile
           push: true
-          # タグ付け: ユーザー名/イメージ名:latest
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/c0mmit-nodejs:latest
+          # ▼ GitHub Actionsのキャッシュを活用して高速化
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      # 5. Golangイメージのビルドとプッシュ
+      # 5. Golangイメージのビルド & プッシュ
       - name: Build and push Golang
         uses: docker/build-push-action@v5
         with:
           context: ./golang
-          file: ./golang/dockerfile
+          file: ./golang/Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/c0mmit-golang:latest
-
-      # 6. Postgresイメージのビルドとプッシュ（カスタムの場合）
-      - name: Build and push Postgres
-        uses: docker/build-push-action@v5
-        with:
-          context: ./postgres
-          file: ./postgres/dockerfile
-          push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/c0mmit-postgres:latest
+          # ▼ GitHub Actionsのキャッシュを活用して高速化
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

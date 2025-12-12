@@ -1,13 +1,19 @@
 version: '3.8'
 services:
+  # ========================================
+  # Golang Service
+  # ========================================
   golang:
     container_name: c0mmit_golang
     build: 
       context: ./golang
-      dockerfile: dockerfile
+      dockerfile: Dockerfile
+      target: develop      
     working_dir: /usr/src/app
     volumes:
       - ./golang:/usr/src/app
+      # Goのモジュールダウンロードをキャッシュして再起動を爆速にする
+      - go_mod_cache:/go/pkg/mod
     ports:
       - "${GO_PORT}:${GO_PORT}"
     env_file:
@@ -16,14 +22,21 @@ services:
     networks:
       - commit_net
 
+  # ========================================
+  # Node.js Service
+  # ========================================
   nodejs:
     container_name: c0mmit_nodejs
     build: 
       context: ./nodejs
-      dockerfile: dockerfile
+      dockerfile: Dockerfile
+      target: develop       
     working_dir: /usr/src/app
     volumes:
       - ./nodejs:/usr/src/app
+      # ★重要: ローカルのnode_modulesでコンテナ内を上書きしないための設定
+      # これがないとOSの違いでエラーになったり、空っぽになったりします
+      - /usr/src/app/node_modules
     ports:
       - "${NODE_PORT}:${NODE_PORT}"
     env_file:
@@ -31,12 +44,18 @@ services:
     tty: true
     networks:
       - commit_net
+    # Goが立ち上がってからNodeを起動する（依存関係）
+    depends_on:
+      - golang
 
+  # ========================================
+  # PostgreSQL (PostGIS) Service
+  # ========================================
   postgresdb:
     container_name: c0mmit_postgres
     build: 
       context: ./postgres
-      dockerfile: dockerfile
+      dockerfile: Dockerfile
     platform: ${DB_PLATFORM:-linux/amd64}
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
@@ -60,3 +79,5 @@ networks:
 volumes:
   postgres_data:
     driver: local
+  # Goのキャッシュ用ボリュームを追加
+  go_mod_cache:
