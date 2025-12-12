@@ -53,14 +53,14 @@ Nodejs,Go,Pythonのハイブリッド仕様で高速化を実現(予定)。
 
 
 ## 📂構成
---ここに画像が入ります--
+![Flow](Docs/Resources/SystemFlow.svg)
 
 ## 📊開発状況
 
-* [ ] 仕様策定
-* [ ] デザイン完了
-* [ ] バックエンド実装中
-* [ ] 完成
+* [x] 仕様策定
+* [x] デザイン完了
+* [x] バックエンド実装中
+* [x] 完成
 
 ## 🛠️構築方法
 
@@ -84,9 +84,11 @@ git clone https://github.com/C0mmitment/Commitment_backend.git
 * クローンしたディレクトリでPowerShellもしくはzshを開いてください。
 
 <br/>
-※Windowsの場合はstart.shの改行コードをCRLFからLFに変更してください。
+※Windowsの場合は*.sh,や*.mod等の改行コードをCRLFからLFに変更してください。
+<br/>
+(その他ビルド時にエラーが出たファイルはすべて改行コード由来の可能性があるのでとりあえず変えてください。)
 
-![CRLF](Docs/Resources/CRLF.png)
+![CRLF](Docs/Resources/CRLF.png)<br/>
 ![CRLF2](Docs/Resources/CRLF2.png)
 
 <br/>
@@ -117,16 +119,23 @@ Windowsなら``./start.bat`` Linuxなら``./start.sh`` macOSなら``./start.comm
 /usr/src/app
 ```
 
-* nodejsコンテナは最初に必ず、init.shを実行してください。
-```
-./init.sh
-```
-
 
 * 初期設定完了！ サーバーの実行は以下のコマンドで行うことができます。
-```
-./serv.sh
-```
+    * 共通
+    ```
+    cd /usr/src/app
+    ```
+
+    * Nodejs
+
+    ```
+    npm start
+    ```
+    * go
+
+    ```
+    go run ./mod/main.go
+    ```
 
 ※Permissionで弾かれる場合は以下のコマンドを実行してください。
 ```
