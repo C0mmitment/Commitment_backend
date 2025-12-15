@@ -13,31 +13,27 @@ RUN --mount=type=cache,target=/var/cache/apk \
 WORKDIR /usr/src/app
 
 COPY go.mod go.sum ./
+
+RUN go install github.com/air-verse/air@v1.61.7
+
 # Goモジュールキャッシュをマウント（再ダウンロード防止）
 RUN --mount=type=cache,target=/go/pkg/mod \
     go mod download
 
 COPY . .
-COPY start.sh /usr/local/bin/start.sh
-RUN chmod +x /usr/local/bin/start.sh
+# COPY start.sh /usr/local/bin/start.sh
+# RUN chmod +x /usr/local/bin/start.sh
 
-CMD ["/usr/local/bin/start.sh"]
+# CMD ["/usr/local/bin/start.sh"]
 
+CMD ["air", "-c", ".air.toml"]
 
 # ==============================================================================
 # ▼ builderステージ
 # ==============================================================================
-FROM golang:1.23-alpine AS builder
+FROM develop AS builder
 
 WORKDIR /usr/src/app
-
-COPY go.mod go.sum ./
-
-# モジュールキャッシュを使ってダウンロード
-RUN --mount=type=cache,target=/go/pkg/mod \
-    go mod download
-
-COPY . .
 
 # ビルドキャッシュ(/root/.cache/go-build)をマウントして、コンパイル時間を短縮
 # -ldflags="-s -w": デバッグ情報を削除して軽量化

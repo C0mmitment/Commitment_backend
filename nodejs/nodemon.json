@@ -1,0 +1,16 @@
+{
+  "watch": ["."],
+  "ext": "js,mjs,json,html",
+  "ignore": [
+    "assets/",
+    "tmp/",
+    "vendor/",
+    "frontend/",
+    "node_modules/",
+    ".git/"
+  ],
+  "delay": 1000,
+  "exec": "node app.mjs",
+  "legacyWatch": false,
+  "verbose": true
+}
