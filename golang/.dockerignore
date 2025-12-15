@@ -1,0 +1,6 @@
+./golang/Dockerfile
+./golang/.air.toml
+./golang/start.sh
+
+Dockerfile
+.dockerignore 

@@ -1,9 +1,0 @@
-./golang/Dockerfile
-./golang/start.sh
-./golang/serv.sh
-
-./nodejs/Dockerfile
-./nodejs/start.sh
-./nodejs/serv.sh
-
-.dockerignore 

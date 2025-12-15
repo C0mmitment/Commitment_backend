@@ -5,6 +5,10 @@
 # ==============================================================================
 FROM node:22-alpine AS develop
 
+WORKDIR /usr/src/app
+
+RUN npm install -g nodemon
+
 # apkのキャッシュを活用
 RUN --mount=type=cache,target=/var/cache/apk \
     apk update && apk add --no-cache git curl ca-certificates openssh
@@ -17,25 +21,19 @@ RUN --mount=type=cache,target=/root/.npm \
     npm install
 
 COPY . .
-COPY start.sh /usr/local/bin/start.sh
-RUN chmod +x /usr/local/bin/start.sh
+# COPY start.sh /usr/local/bin/start.sh
+# RUN chmod +x /usr/local/bin/start.sh
 
-CMD ["/usr/local/bin/start.sh"]
-
+# CMD ["/usr/local/bin/start.sh"]
+CMD ["nodemon"]
 
 # ==============================================================================
 # ▼ builderステージ
 # package.jsonだけで node_modules を整理できます。
 # ==============================================================================
-FROM node:22-alpine AS builder
+FROM develop AS builder
 
 WORKDIR /usr/src/app
-
-COPY package*.json ./
-
-# npm ci のキャッシュを活用
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci
 
 # 【ここがポイント】
 # JSプロジェクトならビルド不要なので、ソースコードのコピーもビルドコマンドも削除！
@@ -50,13 +48,11 @@ FROM gcr.io/distroless/nodejs22-debian12 AS runner
 
 WORKDIR /usr/src/app
 ENV NODE_ENV=production
-USER node
 
 # 1. 整理された node_modules だけをもらう
-COPY --from=builder /usr/src/app/node_modules ./node_modules
+COPY --from=builder --chown=nonroot:nonroot /usr/src/app ./
 
-# 2. ここで初めてソースコードをコピーする
-COPY . .
+USER nonroot
 
 # プロジェクトの構成に合わせてパスを指定
-CMD ["node", "app.mjs"]
+CMD ["app.mjs"]

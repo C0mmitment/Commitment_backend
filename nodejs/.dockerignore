@@ -1,0 +1,8 @@
+node_modules
+
+./nodejs/Dockerfile
+./nodejs/start.sh
+./nodejs/nodemon.json
+
+Dockerfile
+.dockerignore 
