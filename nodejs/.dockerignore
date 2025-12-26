@@ -1,8 +1,31 @@
+# 1. 依存ライブラリ（コンテナ内でインストールするので転送しない）
 node_modules
 
-./nodejs/Dockerfile
-./nodejs/start.sh
-./nodejs/nodemon.json
+# 2. 環境変数・秘密情報（セキュリティ必須）
+.env
 
+# 3. Docker・Git関連（コンテナ内には不要）
+.git
+.gitignore
 Dockerfile
-.dockerignore 
+.dockerignore
+docker-compose.yml
+
+# 4. ログ・一時ファイル（ゴミファイル）
+*.log
+npm-debug.log*
+tmp/
+coverage/
+
+# 5. OS・エディタ設定（MacのゴミやVSCode設定など）
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# 6. ドキュメント類（実行には不要）
+README.md
+LICENSE
+
+# 7. 開発用設定（本番実行には不要な場合）
+nodemon.json

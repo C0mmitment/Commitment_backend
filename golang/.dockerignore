@@ -1,6 +1,27 @@
-./golang/Dockerfile
-./golang/.air.toml
-./golang/start.sh
+# Git
+.git
+.gitignore
 
+# Docker
 Dockerfile
-.dockerignore 
+.dockerignore
+docker-compose.yml
+
+# Editor & OS (★超重要: キャッシュ崩れ防止)
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Go output & Dependencies
+# ローカルのビルド成果物やライブラリはコンテナに入れない
+bin/
+vendor/
+commit-server  <-- もしローカルでビルドしてできてしまった場合用
+
+# Air / Hot Reload
+tmp/
+.air.toml      <-- 設定ファイルはCOPYしてもいいが、変更頻度が高いなら除外もアリ(通常は含めてOK)
+
+# Env
+.env

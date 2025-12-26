@@ -13,6 +13,7 @@ services:
       - ./golang:/usr/src/app
       # Goのモジュールダウンロードをキャッシュして再起動を爆速にする
       - go_mod_cache:/go/pkg/mod
+      - /usr/src/app/tmp
     ports:
       - "${GO_PORT}:${GO_PORT}"
     env_file:
@@ -20,6 +21,8 @@ services:
     tty: true
     networks:
       - commit_net
+    depends_on:
+      - postgresdb
 
   # ========================================
   # Node.js Service

@@ -4,9 +4,6 @@ import xss from 'xss';
 const advice = async (req, res) => {
     // uploadSinglePhoto ミドルウェアによって req.file にデータが格納される
     console.log('[Node.js] /advice ハンドラが実行されました。');
-    const gathering = xss(req.body.gathering); // 位置情報を登録する許可の有無
-    const uuid = xss(req.body.uuid);
-    const category = xss(req.body.category);
     
     if (!req.file) {
         console.log('[Node.js] 画像ファイルがありません。');
@@ -14,7 +11,13 @@ const advice = async (req, res) => {
         return res.status(400).json({ status: 400, message: '画像ファイルがありません。', error: 'No file uploaded.' });
     }
 
-    if(gathering) {
+    const gatheringStr = xss(req.body.gathering);
+    const isGathering = gatheringStr === 'true';
+
+    const uuid = xss(req.body.uuid);
+    const category = xss(req.body.category);
+
+    if(isGathering) {
         service.gathering(uuid,req.file.buffer);
     }
 
