@@ -12,9 +12,9 @@ RUN --mount=type=cache,target=/var/cache/apk \
 
 WORKDIR /usr/src/app
 
-COPY go.mod go.sum ./
-
 RUN go install github.com/air-verse/air@v1.61.7
+
+COPY go.mod go.sum ./
 
 # Goモジュールキャッシュをマウント（再ダウンロード防止）
 RUN --mount=type=cache,target=/go/pkg/mod \
