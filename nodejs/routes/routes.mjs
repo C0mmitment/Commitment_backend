@@ -10,6 +10,8 @@ middle.post('/advice', uploadSinglePhoto, handler.advice);
 
 router.use('/v1', v1);
 v1.use('/middle', middle);
+v1.get('/gtest', handler.gtest)
+v1.post('ptest', handler.ptest)
 v1.get('/deleteLocationData/:uuid',handler.deleteLocationData)
 v1.get('/heatmap/:geohash',handler.heatmapData);
 

@@ -78,8 +78,26 @@ const heatmapData = async (req, res) => {
     }
 }
 
+const gtest = async(req, res) => {
+    res.status(200).json({
+        status: 200,
+        message: "getのテストだよ",
+    });
+}
+
+const ptest = async(req, res) => {
+    const t_text = xss(req.t_text)
+    res.status(200).json({
+        status: 200,
+        message: "postのテストだよ",
+        data: t_text,
+    });
+}
+
 export default {
     advice,
     deleteLocationData,
     heatmapData,
+    gtest,
+    ptest
 }
