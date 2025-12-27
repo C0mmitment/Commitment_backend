@@ -50,7 +50,7 @@ func main() {
 	addImgLocImpl := persistence.NewLocationRepositoryImpl(posgresDB)
 
 	// アプリケーション層のサービス
-	analyzerUsecase := usecase.NewImageAnalyzer(aiConnectorImpl)
+	analyzerUsecase := usecase.NewImageAnalyzer(aiConnectorImpl, addImgLocImpl)
 	locationUsecase := usecase.NewAdditionLocation(addImgLocImpl)
 
 	// インフラ層のコントローラー

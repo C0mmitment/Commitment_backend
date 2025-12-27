@@ -6,5 +6,6 @@ import "github.com/86shin/commit_goback/domain/model"
 // レスポンス用
 type AnalysisResponse struct {
 	Status   string                     `json:"status"`
+	Message  string                     `json:"message"`
 	Analysis *model.CompositionAnalysis `json:"analysis"`
 }

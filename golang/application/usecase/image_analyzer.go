@@ -4,37 +4,78 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"log"
+	"time"
 
 	"github.com/86shin/commit_goback/domain/model"
+	"github.com/86shin/commit_goback/domain/repository"
 	"github.com/86shin/commit_goback/domain/service"
+	"github.com/86shin/commit_goback/domain/utils"
+	"github.com/google/uuid"
+	"golang.org/x/sync/errgroup"
 )
 
 // ImageAnalyzerUsecase はコントローラーが依存するインターフェース
 type ImageAnalyzerUsecase interface {
-	AnalyzeImage(ctx context.Context, category, base64Image, mimeType string) (*model.CompositionAnalysis, error)
+	AnalyzeImage(ctx context.Context, userId uuid.UUID, category, base64Image, mimeType, geohash string, lat, lng float64) (*model.CompositionAnalysis, error)
 }
 
 // ImageAnalyzer は Usecase の実装構造体
 type ImageAnalyzer struct {
-	Connector service.AIConnector // ドメイン層の抽象化されたAI接続に依存
+	Connector   service.AIConnector // ドメイン層の抽象化されたAI接続に依存
+	HeatmapRepo repository.LocationRepojitory
 }
 
-func NewImageAnalyzer(connector service.AIConnector) *ImageAnalyzer {
-	return &ImageAnalyzer{Connector: connector}
+func NewImageAnalyzer(connector service.AIConnector, heatmapRepo repository.LocationRepojitory) *ImageAnalyzer {
+	return &ImageAnalyzer{
+		Connector:   connector,
+		HeatmapRepo: heatmapRepo,
+	}
 }
 
 // AnalyzeImage は画像分析のビジネスロジック（ユースケース）を実行します。
-func (a *ImageAnalyzer) AnalyzeImage(ctx context.Context, category, base64Image, mimeType string) (*model.CompositionAnalysis, error) {
+func (a *ImageAnalyzer) AnalyzeImage(ctx context.Context, userId uuid.UUID, category, base64Image, mimeType, geohash string, lat, lng float64) (*model.CompositionAnalysis, error) {
+	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
+	defer cancel()
+
+	if err := utils.ValidateLatLng(lat, lng); err != nil {
+		return &model.CompositionAnalysis{}, fmt.Errorf("無効な座標: 最小値が最大値より大きいです")
+	}
+
+	locationEntity, _ := model.NewAddLocation(userId, lat, lng, geohash)
+
 	// 1. エンコーディング/変換ロジック (ここではBase64デコード)
 	imageBytes, err := base64.StdEncoding.DecodeString(base64Image)
 	if err != nil {
 		return &model.CompositionAnalysis{}, fmt.Errorf("base64デコードエラー: %w", err)
 	}
 
-	// 2. ドメイン層の抽象化されたコネクタを使って処理を実行
-	advice, err := a.Connector.GetCompositionAdvice(ctx, category, imageBytes, mimeType)
-	if err != nil {
-		return &model.CompositionAnalysis{}, fmt.Errorf("AIコネクタ処理エラー: %w", err)
+	g, ctx := errgroup.WithContext(ctx)
+
+	var advice *model.CompositionAnalysis
+
+	// --- ゴールーチンA: AIコネクタ (重い処理) ---
+	g.Go(func() error {
+		res, err := a.Connector.GetCompositionAdvice(ctx, category, imageBytes, mimeType)
+		if err != nil {
+			return fmt.Errorf("AIコネクタ処理エラー: %w", err)
+		}
+		advice = res
+		return nil
+	})
+
+	// --- ゴールーチンB: DB保存 (軽い処理) ---
+	g.Go(func() error {
+		if err := a.HeatmapRepo.AdditionImageLocation(ctx, &locationEntity); err != nil {
+			log.Printf("ERROR: 位置情報の追加失敗: %v", err)
+			return fmt.Errorf("画像位置情報追加処理の実行に失敗しました: %w", err)
+		}
+		return nil
+	})
+
+	// 4. 両方終わるのを待つ
+	if err := g.Wait(); err != nil {
+		return nil, err
 	}
 
 	return advice, nil

@@ -16,34 +16,6 @@ func NewLocationHandler(location usecase.AdditionLocationUsecase) *LocationHandl
 	return &LocationHandler{Location: location}
 }
 
-func (h *LocationHandler) AddImgLocation(c echo.Context) error {
-	ctx := c.Request().Context()
-
-	var req dto.AddLocationRequest
-	if err := c.Bind(&req); err != nil {
-		res := dto.AddLocationResponse{
-			Status:  "400",
-			Message: "無効なリクエストフォーマット",
-			Error:   err.Error(),
-		}
-		return c.JSON(http.StatusBadRequest, res)
-	}
-	err := h.Location.AddLocationUsecase(ctx, req.UserId, req.Lat, req.Lng, req.Geo)
-	if err != nil {
-		res := dto.AddLocationResponse{
-			Status:  "500",
-			Message: "画像位置情報の追加に失敗しました",
-			Error:   err.Error(),
-		}
-		return c.JSON(http.StatusInternalServerError, res)
-	}
-	res := dto.AddLocationResponse{
-		Status:  "200",
-		Message: "画像位置情報の追加処理完了",
-	}
-	return c.JSON(http.StatusOK, res)
-}
-
 func (h *LocationHandler) GetHeatmapData(c echo.Context) error {
 	ctx := c.Request().Context()
 
