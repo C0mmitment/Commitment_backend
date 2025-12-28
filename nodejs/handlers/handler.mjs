@@ -86,7 +86,7 @@ const gtest = async(req, res) => {
 }
 
 const ptest = async(req, res) => {
-    const t_text = xss(req.t_text)
+    const t_text = xss(req.body.t_text)
     res.status(200).json({
         status: 200,
         message: "postのテストだよ",
