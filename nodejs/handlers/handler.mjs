@@ -17,8 +17,10 @@ const advice = async (req, res) => {
     const uuid = xss(req.body.uuid);
     const category = xss(req.body.category);
 
+    const geoResult = null;
+
     if(isGathering) {
-        service.gathering(uuid,req.file.buffer);
+        geoResult = await service.gathering(req.file.buffer);
     }
 
     // 画像バッファをBase64にエンコード
@@ -28,7 +30,7 @@ const advice = async (req, res) => {
     console.log(`[Node.js] サービス層 (advice) を呼び出します...`);
 
     // サービス層の関数を呼び出す (try...catch はサービス層が担当)
-    const result = await service.advice(base64Image, mimeType, category);
+    const result = await service.advice(base64Image, mimeType, category, uuid, geoResult);
 
     // サービス層からの結果(result.status)に基づいてレスポンスを返す
     if (result.status === 200) {
