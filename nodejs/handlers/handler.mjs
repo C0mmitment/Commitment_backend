@@ -96,10 +96,29 @@ const ptest = async(req, res) => {
     });
 }
 
+const gpsTest = async(req, res) => {    
+
+    const geoResult = await service.gathering(req.file.buffer);
+
+    if(geoResult == null) {
+        res.status(200).json({
+            status: 200,
+            message: "GPSデータが存在しません。",
+        });
+    } else {
+        res.status(200).json({
+            status: 200,
+            message: "GPSデータが存在します。",
+            data: geoResult
+        });
+    }
+}
+
 export default {
     advice,
     deleteLocationData,
     heatmapData,
     gtest,
-    ptest
+    ptest,
+    gpsTest
 }

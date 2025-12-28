@@ -71,7 +71,7 @@ const gathering = async (data) => {
         }
     } catch (error) {
         console.log("[app.mjs]gatheringError")
-        return;
+        return null;
     }
 }
 

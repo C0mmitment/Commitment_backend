@@ -7,6 +7,7 @@ const v1 = Router();
 const middle = Router();
 
 middle.post('/advice', uploadSinglePhoto, handler.advice);
+middle.post('/gpsTest', uploadSinglePhoto, handler.gpsTest);
 
 router.use('/v1', v1);
 v1.use('/middle', middle);
