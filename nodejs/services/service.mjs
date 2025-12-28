@@ -6,7 +6,7 @@ import { resourceUsage } from 'process';
 
 const GO_API_URL = process.env.GO_API_URL;
 
-const advice = async (base64Image, mimeType, category, uuid, geoResult) => {
+const advice = async (base64Image, mimeType, category, uuid, geoResult, isGathering) => {
     if (!GO_API_URL) {
         console.error('[app.mjs] エラー: GO_API_URL 環境変数が設定されていません。');
         return { status: 500, message: 'サーバー内部の設定エラーです。', error: 'GO_API_URL is not set' };
@@ -15,7 +15,11 @@ const advice = async (base64Image, mimeType, category, uuid, geoResult) => {
     try {
         console.log(`[app.mjs] Goサーバー (${GO_API_URL}) に画像データ (${mimeType}) を送信中...`);
 
-        console.log("GR:"+geoResult);
+        console.log(`[service][info]base64:` + base64Image);
+        console.log(`[service][info]uuid:` + uuid);
+        console.log(`[service][info]mime:` + mimeType);
+        console.log(`[service][info]cate:` + category);
+        console.log(`[service][info]hash:` + geoResult.geohash);
 
         // Goサーバーへリクエストを送信
         const goResponse = await axios.post(`${GO_API_URL}/advice`, {
@@ -25,7 +29,8 @@ const advice = async (base64Image, mimeType, category, uuid, geoResult) => {
             mime_type: mimeType,
             latitude: geoResult.latitude ?? null,
             longitude: geoResult.longitude ?? null,
-            geohash: geoResult.geohash ?? null
+            geohash: geoResult.geohash ?? null,
+            save_loc: isGathering
         });
         
         // 成功時のレスポンス

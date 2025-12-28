@@ -30,7 +30,7 @@ const advice = async (req, res) => {
     console.log(`[Node.js] サービス層 (advice) を呼び出します...`);
 
     // サービス層の関数を呼び出す (try...catch はサービス層が担当)
-    const result = await service.advice(base64Image, mimeType, category, uuid, geoResult);
+    const result = await service.advice(base64Image, mimeType, category, uuid, geoResult, isGathering);
 
     // サービス層からの結果(result.status)に基づいてレスポンスを返す
     if (result.status === 200) {
