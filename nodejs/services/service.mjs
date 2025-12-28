@@ -15,6 +15,8 @@ const advice = async (base64Image, mimeType, category, uuid, geoResult) => {
     try {
         console.log(`[app.mjs] Goサーバー (${GO_API_URL}) に画像データ (${mimeType}) を送信中...`);
 
+        console.log("GR:"+geoResult);
+
         // Goサーバーへリクエストを送信
         const goResponse = await axios.post(`${GO_API_URL}/advice`, {
             user_uuid: uuid,
@@ -47,15 +49,16 @@ const advice = async (base64Image, mimeType, category, uuid, geoResult) => {
 
 const gathering = async (data) => {
     if(!(data)) {
+        console.log("data null")
         return null;
     }
     const Result = await extractGpsFromImage(data);
     if(Result == null) {
+        console.log("result null")
         return null;
     }
     const geohash = await createGeohash(Result.latitude,Result.longitude,9);
     try {
-        // Goサーバーへリクエストを送信
         return { 
             latitude: Result.latitude,
             longitude: Result.longitude,

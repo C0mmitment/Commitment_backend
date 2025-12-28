@@ -17,7 +17,7 @@ const advice = async (req, res) => {
     const uuid = xss(req.body.uuid);
     const category = xss(req.body.category);
 
-    const geoResult = null;
+    let geoResult = null;
 
     if(isGathering) {
         geoResult = await service.gathering(req.file.buffer);
