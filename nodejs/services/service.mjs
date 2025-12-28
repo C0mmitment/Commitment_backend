@@ -6,7 +6,7 @@ import { resourceUsage } from 'process';
 
 const GO_API_URL = process.env.GO_API_URL;
 
-const advice = async (base64Image, mimeType, category) => {
+const advice = async (base64Image, mimeType, category, uuid, geoResult, isGathering) => {
     if (!GO_API_URL) {
         console.error('[app.mjs] エラー: GO_API_URL 環境変数が設定されていません。');
         return { status: 500, message: 'サーバー内部の設定エラーです。', error: 'GO_API_URL is not set' };
@@ -15,11 +15,22 @@ const advice = async (base64Image, mimeType, category) => {
     try {
         console.log(`[app.mjs] Goサーバー (${GO_API_URL}) に画像データ (${mimeType}) を送信中...`);
 
+        console.log(`[service][info]base64:` + base64Image);
+        console.log(`[service][info]uuid:` + uuid);
+        console.log(`[service][info]mime:` + mimeType);
+        console.log(`[service][info]cate:` + category);
+        console.log(`[service][info]hash:` + geoResult.geohash);
+
         // Goサーバーへリクエストを送信
         const goResponse = await axios.post(`${GO_API_URL}/advice`, {
+            user_uuid: uuid,
+            category: category,
             image_data_base64: base64Image,
             mime_type: mimeType,
-            category: category
+            latitude: geoResult.latitude ?? null,
+            longitude: geoResult.longitude ?? null,
+            geohash: geoResult.geohash ?? null,
+            save_loc: isGathering
         });
         
         // 成功時のレスポンス
@@ -41,37 +52,25 @@ const advice = async (base64Image, mimeType, category) => {
     }
 }
 
-const gathering = async (uuid,data) => {
-    if(!(uuid && data)) {
-        return;
+const gathering = async (data) => {
+    if(!(data)) {
+        console.log("data null")
+        return null;
     }
     const Result = await extractGpsFromImage(data);
     if(Result == null) {
-        return;
+        console.log("result null")
+        return null;
     }
     const geohash = await createGeohash(Result.latitude,Result.longitude,9);
     try {
-        console.log(`Goサーバー (${GO_API_URL}) に送信中...`);
-        // Goサーバーへリクエストを送信
-        const goResponse = await axios.post(`${GO_API_URL}/location/add`, {
-            user_uuid: uuid,
+        return { 
             latitude: Result.latitude,
             longitude: Result.longitude,
-            geohash: geohash
-        });
-        
-        console.log(goResponse.status);
-        console.log(goResponse.message);
-        return;
-
-    } catch (error) {
-        // Axiosエラーハンドリング (Go側が500などを返した場合)
-        if (error.response) {
-            console.error('[app.mjs] Goサーバーエラーレスポンス:', error.response.data);
-            return;
+            geohash: geohash 
         }
-        // Goサーバーとの通信自体に失敗した場合
-        console.error('[app.mjs] Goサーバーとの通信エラー:', error.message || error);
+    } catch (error) {
+        console.log("[app.mjs]gatheringError")
         return;
     }
 }
