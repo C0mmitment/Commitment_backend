@@ -49,7 +49,7 @@ func (p *LocationrepositoryImpl) AdditionImageLocation(ctx context.Context, loc 
 
 	query := fmt.Sprintf(`
 		INSERT INTO %s
-		(location_id, user_id, latitude, longitude, geohash, created_at)
+		(location_id, user_id, latitude, longitude, geom, geohash, created_at)
 		VALUES (
 			$1, $2, $3, $4,
 			ST_SetSRID(ST_MakePoint($4, $3), 4326),
