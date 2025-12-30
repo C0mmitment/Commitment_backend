@@ -10,4 +10,5 @@ type ImageRequest struct {
 	Lat         float64   `json:"latitude"`
 	Lng         float64   `json:"longitude"`
 	Geo         string    `json:"geohash"`
+	SaveLoc     bool      `json:""save_loc`
 }

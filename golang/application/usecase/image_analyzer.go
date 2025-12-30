@@ -17,7 +17,7 @@ import (
 
 // ImageAnalyzerUsecase はコントローラーが依存するインターフェース
 type ImageAnalyzerUsecase interface {
-	AnalyzeImage(ctx context.Context, userId uuid.UUID, category, base64Image, mimeType, geohash string, lat, lng float64) (*model.CompositionAnalysis, error)
+	AnalyzeImage(ctx context.Context, userId uuid.UUID, category, base64Image, mimeType, geohash string, lat, lng float64, saveLocation bool) (*model.CompositionAnalysis, error)
 }
 
 // ImageAnalyzer は Usecase の実装構造体
@@ -34,12 +34,14 @@ func NewImageAnalyzer(connector service.AIConnector, heatmapRepo repository.Loca
 }
 
 // AnalyzeImage は画像分析のビジネスロジック（ユースケース）を実行します。
-func (a *ImageAnalyzer) AnalyzeImage(ctx context.Context, userId uuid.UUID, category, base64Image, mimeType, geohash string, lat, lng float64) (*model.CompositionAnalysis, error) {
+func (a *ImageAnalyzer) AnalyzeImage(ctx context.Context, userId uuid.UUID, category, base64Image, mimeType, geohash string, lat, lng float64, saveLocation bool) (*model.CompositionAnalysis, error) {
 	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
 
-	if err := utils.ValidateLatLng(lat, lng); err != nil {
-		return &model.CompositionAnalysis{}, fmt.Errorf("無効な座標: 最小値が最大値より大きいです")
+	if saveLocation {
+		if err := utils.ValidateLatLng(lat, lng); err != nil {
+			return &model.CompositionAnalysis{}, fmt.Errorf("無効な座標: 最小値が最大値より大きいです")
+		}
 	}
 
 	locationEntity, _ := model.NewAddLocation(userId, lat, lng, geohash)
@@ -51,7 +53,6 @@ func (a *ImageAnalyzer) AnalyzeImage(ctx context.Context, userId uuid.UUID, cate
 	}
 
 	g, ctx := errgroup.WithContext(ctx)
-
 	var advice *model.CompositionAnalysis
 
 	// --- ゴールーチンA: AIコネクタ (重い処理) ---
@@ -65,13 +66,15 @@ func (a *ImageAnalyzer) AnalyzeImage(ctx context.Context, userId uuid.UUID, cate
 	})
 
 	// --- ゴールーチンB: DB保存 (軽い処理) ---
-	g.Go(func() error {
-		if err := a.HeatmapRepo.AdditionImageLocation(ctx, &locationEntity); err != nil {
-			log.Printf("ERROR: 位置情報の追加失敗: %v", err)
-			return fmt.Errorf("画像位置情報追加処理の実行に失敗しました: %w", err)
-		}
-		return nil
-	})
+	if saveLocation {
+		g.Go(func() error {
+			if err := a.HeatmapRepo.AdditionImageLocation(ctx, &locationEntity); err != nil {
+				log.Printf("ERROR: 位置情報の追加失敗: %v", err)
+				return fmt.Errorf("画像位置情報追加処理の実行に失敗しました: %w", err)
+			}
+			return nil
+		})
+	}
 
 	// 4. 両方終わるのを待つ
 	if err := g.Wait(); err != nil {
