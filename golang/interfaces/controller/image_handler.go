@@ -45,7 +45,7 @@ func (h *ImageHandler) AnalyzeImageEchoHandler(c echo.Context) error {
 	// 2. アプリケーション層（Usecase）への処理委譲
 	// ここで string ではなく、構造体 (AnalysisResult) が返ってくるように実装します
 	analysisResult, err := h.Analyzer.AnalyzeImage(ctx, req.UserId, req.Category, req.Base64Image, req.MimeType,
-		req.Geo, req.Lat, req.Lng)
+		req.Geo, req.Lat, req.Lng, req.SaveLoc)
 
 	if err != nil {
 		log.Printf("[Analysis Error] %v", err)
