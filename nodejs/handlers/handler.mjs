@@ -114,11 +114,21 @@ const gpsTest = async(req, res) => {
     }
 }
 
+const apiHealth = async(req, res) => {
+    const result = await service.apiHealth();
+    res.status(result.status).json({
+        status: result.status,
+        message: result.message,
+        data: result.data
+    });
+}
+
 export default {
     advice,
     deleteLocationData,
     heatmapData,
     gtest,
     ptest,
-    gpsTest
+    gpsTest,
+    apiHealth,
 }
