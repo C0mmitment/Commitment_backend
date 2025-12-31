@@ -57,3 +57,18 @@ export async function createGeohash(lat, lon, len) {
     const hash = geohash.encode(lat, lon, len);
     return hash;
 }
+
+/**
+ * 
+ * @param {function} fn 
+ * @returns statusとfunctionの実行にかかったレイテンシ
+ */
+export const measure = async (fn) => {
+    const start = Date.now();
+    try {
+        await fn();
+        return { status: 'OK', latency_ms: Date.now() - start };
+    } catch (err) {
+        return { status: 'NG', latency_ms: Date.now() - start, error: err };
+    }
+};

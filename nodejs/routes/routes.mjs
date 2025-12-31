@@ -16,4 +16,7 @@ v1.post('/ptest', handler.ptest)
 v1.get('/deleteLocationData/:uuid',handler.deleteLocationData)
 v1.get('/heatmap/:geohash',handler.heatmapData);
 
+//ステータスページ用
+v1.get('/health', handler.apiHealth);
+
 export default router;
