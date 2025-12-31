@@ -1,8 +1,10 @@
 import axios from 'axios';
-import { extractGpsFromImage, createGeohash } from '../utils/utils.mjs'
+import { extractGpsFromImage, createGeohash, measure } from '../utils/utils.mjs';
+import repo from '../repositories/repository.mjs';
 import { stat } from 'fs';
 import { resourceUsage } from 'process';
 
+const apiLatestResult = [];
 
 const GO_API_URL = process.env.GO_API_URL;
 
@@ -15,11 +17,11 @@ const advice = async (base64Image, mimeType, category, uuid, geoResult, isGather
     try {
         console.log(`[app.mjs] Goサーバー (${GO_API_URL}) に画像データ (${mimeType}) を送信中...`);
 
-        console.log(`[service][info]base64:` + base64Image);
-        console.log(`[service][info]uuid:` + uuid);
-        console.log(`[service][info]mime:` + mimeType);
-        console.log(`[service][info]cate:` + category);
-        console.log(`[service][info]hash:` + geoResult.geohash);
+        // console.log(`[service][info]base64:` + base64Image);
+        // console.log(`[service][info]uuid:` + uuid);
+        // console.log(`[service][info]mime:` + mimeType);
+        // console.log(`[service][info]cate:` + category);
+        // console.log(`[service][info]hash:` + geoResult.geohash);
 
         // Goサーバーへリクエストを送信
         const goResponse = await axios.post(`${GO_API_URL}/advice`, {
@@ -32,6 +34,11 @@ const advice = async (base64Image, mimeType, category, uuid, geoResult, isGather
             geohash: geoResult.geohash ?? null,
             save_loc: isGathering
         });
+
+        apiLatestResult.push( {status: 'OK' });
+        if (apiLatestResult.length > 50) {
+            apiLatestResult.shift(); 
+        }
         
         // 成功時のレスポンス
         return { status: 200, message: '解析に成功しました。', data: goResponse.data };
@@ -40,11 +47,19 @@ const advice = async (base64Image, mimeType, category, uuid, geoResult, isGather
         // Axiosエラーハンドリング (Go側が500などを返した場合)
         if (error.response) {
             console.error('[app.mjs] Goサーバーエラーレスポンス:', error.response.data);
+            apiLatestResult.push( {status: 'NG' });
+            if (apiLatestResult.length > 50) {
+                apiLatestResult.shift(); 
+            }
             return { 
                 status: error.response.status, 
                 message: 'Goサーバーでの処理中にエラーが発生しました。', 
                 error: error.response.data 
             };
+        }
+        apiLatestResult.push( {status: 'NG' });
+        if (apiLatestResult.length > 50) {
+            apiLatestResult.shift(); 
         }
         // Goサーバーとの通信自体に失敗した場合
         console.error('[app.mjs] Goサーバーとの通信エラー:', error.message || error);
@@ -82,12 +97,20 @@ const deleteLocationData = async (uuid) => {
         });
 
         if(goResponse.status === 200) {
+            apiLatestResult.push( {status: 'OK' });
+            if (apiLatestResult.length > 50) {
+                apiLatestResult.shift(); 
+            }
             return {status:200, message:'削除に成功しました'};
         } else {
             return {status:500, message:'削除に失敗しました'}
         }
 
     } catch {
+        apiLatestResult.push( {status: 'NG' });
+        if (apiLatestResult.length > 50) {
+            apiLatestResult.shift(); 
+        }
         return {status: 500, error:'いたーなるーさばーえーら'}
     }
 }
@@ -110,9 +133,45 @@ const getHeatmapData = async (min_lat, min_lon, max_lat, max_lon) => {
     }
 }
 
+const apiHealth = async () => {
+    const data = {};
+    let apiStatus = 'OK';
+
+    //対CFPing
+    const network = await measure(() => repo.apiTestNetwork('1.1.1.1'));
+    data.network = { status: network.status, latency: network.latency_ms };
+    if (network.status === 'NG') apiStatus = 'NG';
+
+    //対GooglePing
+    const google = await measure(() => repo.apiTestNetwork('8.8.8.8'));
+    data.google = { status: google.status, latency: google.latency_ms };
+    if (google.status === 'NG') apiStatus = 'NG';
+
+    //GOとの通信成功率
+    //過去20件中4割NGでWARN、8割NGでNGを返す。
+    const evaluateRecentStatus = () => {
+        const recent = apiLatestResult.slice(-20); 
+        if (recent.length === 0) return 'UNKNOWN'; 
+
+        const ngCount = recent.filter(s => s.status === 'NG').length;
+        const ngRatio = ngCount / recent.length;
+
+        if (ngRatio === 0.8) return 'NG';          
+        if (ngRatio >= 0.4) return 'WARN';      
+        return 'OK';
+    }
+
+    data.C8TCore = { status: evaluateRecentStatus(), latency: null };
+    data.API = { status: apiStatus, latency: null };
+
+    return { status:200, message:'healthData', data };
+}
+
+
 export default {
     advice,
     gathering,
     deleteLocationData,
     getHeatmapData,
+    apiHealth,
 }
