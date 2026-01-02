@@ -14,7 +14,7 @@ v1.use('/middle', middle);
 v1.get('/gtest', handler.gtest)
 v1.post('/ptest', handler.ptest)
 v1.get('/deleteLocationData/:uuid',handler.deleteLocationData)
-v1.get('/heatmap/:min_lat/:min_lon/:max_lat/:max_lon',handler.heatmapData);
+v1.get('/heatmap',handler.heatmapData);
 
 //ステータスページ用
 v1.get('/health', handler.apiHealth);
