@@ -62,10 +62,10 @@ const deleteLocationData = async (req,res) => {
 
 const heatmapData = async (req, res) => {
     try {
-        const min_lat = xss(req.query.min_lat);
-        const min_lon = xss(req.query.min_lon);
-        const max_lat = xss(req.query.max_lat);
-        const max_lon = xss(req.query.max_lon);
+        const min_lat = xss(req.params.min_lat);
+        const min_lon = xss(req.params.min_lon);
+        const max_lat = xss(req.params.max_lat);
+        const max_lon = xss(req.params.max_lon);
 
         if (!min_lat || !min_lon || !max_lat || !max_lon) {
             return res.status(400).json({ status: 400, message: '必要なパラメータが不足しています。' });
