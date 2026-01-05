@@ -17,11 +17,14 @@ const advice = async (base64Image, mimeType, category, uuid, geoResult, isGather
     try {
         console.log(`[app.mjs] Goサーバー (${GO_API_URL}) に画像データ (${mimeType}) を送信中...`);
 
-        // console.log(`[service][info]base64:` + base64Image);
-        // console.log(`[service][info]uuid:` + uuid);
-        // console.log(`[service][info]mime:` + mimeType);
-        // console.log(`[service][info]cate:` + category);
-        // console.log(`[service][info]hash:` + geoResult.geohash);
+        let Gat = isGathering;
+
+        if(geoResult == null) {
+            Gat = false;
+        }
+
+        console.log(Gat);
+
 
         // Goサーバーへリクエストを送信
         const goResponse = await axios.post(`${GO_API_URL}/advice`, {
@@ -29,10 +32,10 @@ const advice = async (base64Image, mimeType, category, uuid, geoResult, isGather
             category: category,
             image_data_base64: base64Image,
             mime_type: mimeType,
-            latitude: geoResult.latitude ?? null,
-            longitude: geoResult.longitude ?? null,
-            geohash: geoResult.geohash ?? null,
-            save_loc: isGathering
+            latitude: geoResult?.latitude ?? null,
+            longitude: geoResult?.longitude ?? null,
+            geohash: geoResult?.geohash ?? null,
+            save_loc: Gat
         });
 
         apiLatestResult.push( {status: 'OK' });
@@ -78,6 +81,9 @@ const gathering = async (data) => {
         return null;
     }
     const geohash = await createGeohash(Result.latitude,Result.longitude,9);
+    if(geohash == null) {
+        return null;
+    }
     try {
         return { 
             latitude: Result.latitude,

@@ -4,6 +4,19 @@ import express from 'express';
 import corsMiddleware from './middleware/cors.mjs';
 import routes from "./routes/routes.mjs";
 
+const version = '1.0.0';
+
+const aa = `   
+   ___ ___ _____ 
+  / __( _ )_   _|
+ | (__/ _ \\\ | |  
+  \\\___\\\___/ |_|  
+                 `;
+
+console.log(aa);
+console.log('ver.',version);
+console.log('Initializing Node.js server...');
+
 const app = express();
 app.use(express.json());
 app.use(corsMiddleware);
