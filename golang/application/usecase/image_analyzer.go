@@ -17,7 +17,7 @@ import (
 
 // ImageAnalyzerUsecase はコントローラーが依存するインターフェース
 type ImageAnalyzerUsecase interface {
-	AnalyzeImage(ctx context.Context, userId uuid.UUID, category, base64Image, mimeType, geohash string, lat, lng float64, saveLocation bool) (*model.CompositionAnalysis, error)
+	AnalyzeImage(ctx context.Context, userId uuid.UUID, category, base64Image, mimeType, geohash string, lat, lng *float64, saveLocation bool) (*model.CompositionAnalysis, error)
 }
 
 // ImageAnalyzer は Usecase の実装構造体
@@ -34,17 +34,34 @@ func NewImageAnalyzer(connector service.AIConnector, heatmapRepo repository.Loca
 }
 
 // AnalyzeImage は画像分析のビジネスロジック（ユースケース）を実行します。
-func (a *ImageAnalyzer) AnalyzeImage(ctx context.Context, userId uuid.UUID, category, base64Image, mimeType, geohash string, lat, lng float64, saveLocation bool) (*model.CompositionAnalysis, error) {
+func (a *ImageAnalyzer) AnalyzeImage(ctx context.Context, userId uuid.UUID, category, base64Image, mimeType, geohash string, lat, lng *float64, saveLocation bool) (*model.CompositionAnalysis, error) {
 	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
 
+	// 座標の実体を入れる変数を定義（デフォルト0.0）
+	var latVal, lngVal float64
+
+	if lat != nil {
+		latVal = *lat
+	}
+	if lng != nil {
+		lngVal = *lng
+	}
+
+	// saveLocation が true なのに、座標が送られてこなかった場合のチェック
 	if saveLocation {
-		if err := utils.ValidateLatLng(lat, lng); err != nil {
-			return &model.CompositionAnalysis{}, fmt.Errorf("無効な座標: 最小値が最大値より大きいです")
+		if lat == nil || lng == nil {
+			// 「保存する」と言っているのに座標がないのは矛盾なのでエラーにする
+			return &model.CompositionAnalysis{}, fmt.Errorf("位置情報保存が要求されましたが、座標データ(lat/lng)が不足しています")
+		}
+
+		// バリデーションには実体(latVal, lngVal)を渡す
+		if err := utils.ValidateLatLng(latVal, lngVal); err != nil {
+			return &model.CompositionAnalysis{}, fmt.Errorf("無効な座標: %w", err)
 		}
 	}
 
-	locationEntity, _ := model.NewAddLocation(userId, lat, lng, geohash)
+	locationEntity, _ := model.NewAddLocation(userId, latVal, lngVal, geohash)
 
 	// 1. エンコーディング/変換ロジック (ここではBase64デコード)
 	imageBytes, err := base64.StdEncoding.DecodeString(base64Image)
