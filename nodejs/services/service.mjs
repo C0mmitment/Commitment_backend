@@ -15,7 +15,6 @@ const advice = async (base64Image, mimeType, category, uuid, geoResult, isGather
     }
 
     try {
-        console.log(geoResult.latitude);
         console.log(`[app.mjs] Goサーバー (${GO_API_URL}) に画像データ (${mimeType}) を送信中...`);
 
         let Gat = isGathering;
@@ -26,15 +25,16 @@ const advice = async (base64Image, mimeType, category, uuid, geoResult, isGather
 
         console.log(Gat);
 
+
         // Goサーバーへリクエストを送信
         const goResponse = await axios.post(`${GO_API_URL}/advice`, {
             user_uuid: uuid,
             category: category,
             image_data_base64: base64Image,
             mime_type: mimeType,
-            latitude: geoResult.latitude ?? null,
-            longitude: geoResult.longitude ?? null,
-            geohash: geoResult.geohash ?? null,
+            latitude: geoResult?.latitude ?? null,
+            longitude: geoResult?.longitude ?? null,
+            geohash: geoResult?.geohash ?? null,
             save_loc: Gat
         });
 
