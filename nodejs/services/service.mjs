@@ -70,24 +70,20 @@ const advice = async (base64Image, mimeType, category, uuid, geoResult, isGather
     }
 }
 
-const gathering = async (data) => {
-    if(!(data)) {
-        console.log("data null")
+const gathering = async (lat,long) => {
+    if(!(lat || long)) {
+        console.log(" null")
         return null;
     }
-    const Result = await extractGpsFromImage(data);
-    if(Result == null) {
-        console.log("result null")
-        return null;
-    }
-    const geohash = await createGeohash(Result.latitude,Result.longitude,9);
+
+    const geohash = await createGeohash(lat,long,9);
     if(geohash == null) {
         return null;
     }
     try {
         return { 
-            latitude: Result.latitude,
-            longitude: Result.longitude,
+            latitude: lat,
+            longitude: long,
             geohash: geohash 
         }
     } catch (error) {

@@ -16,11 +16,19 @@ const advice = async (req, res) => {
 
     const uuid = xss(req.body.uuid);
     const category = xss(req.body.category);
+    const lat = xss(req.body.lat);
+    const long = xss(req.body.long);
+
+    const latFloat = parseFloat(lat) ?? null;
+    const longFloat = parseFloat(long) ?? null;
 
     let geoResult = null;
 
     if(isGathering) {
-        geoResult = await service.gathering(req.file.buffer);
+        geoResult = await service.gathering(latFloat,longFloat);
+        console.log(geoResult.latitude);
+        console.log(geoResult.longitude);
+        console.log(geoResult.geohash);
     }
 
     // 画像バッファをBase64にエンコード
