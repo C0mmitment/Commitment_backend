@@ -7,7 +7,7 @@ import geohash from 'ngeohash';
  * @param {string} imagePath - 画像ファイルへのパス
  * @returns {Promise<Object | null>} - 緯度と経度を含むオブジェクト、または情報がない場合はnull
  */
-export async function extractGpsFromImage(data) {
+export async function extractGpsFromImage(lat,long) {
     try {
         // 1. 画像ファイルを読み込む (Bufferとして)
         const buffer = data;
