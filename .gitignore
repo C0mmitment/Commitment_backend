@@ -11,17 +11,3 @@ nodejs/npm-debug.log
 golang/tmp/
 golang/main
 golang/commit-server
-
-.env
-*.env
-.DS_Store
-.idea/
-.vscode/
-
-nodejs/node_modules
-nodejs/tmp/
-nodejs/npm-debug.log
-
-golang/tmp/
-golang/main
-golang/commit-server
