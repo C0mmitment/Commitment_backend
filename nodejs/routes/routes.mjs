@@ -18,5 +18,4 @@ v1.get('/heatmap',handler.heatmapData);
 
 //ステータスページ用
 v1.get('/health', handler.apiHealth);
-
 export default router;

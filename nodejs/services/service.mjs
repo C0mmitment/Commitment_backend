@@ -94,9 +94,7 @@ const gathering = async (lat,long) => {
 
 const deleteLocationData = async (uuid) => {
     try {
-        const goResponse = await axios.post(`${GO_API_URL}/location/delete`, {
-            user_uuid: uuid,
-        });
+        const goResponse = await axios.delete(`${GO_API_URL}/location/delete/${uuid}`);
 
         if(goResponse.status === 200) {
             apiLatestResult.push( {status: 'OK' });
