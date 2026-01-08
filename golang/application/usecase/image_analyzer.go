@@ -49,6 +49,15 @@ func (a *ImageAnalyzer) AnalyzeImage(ctx context.Context, userId uuid.UUID, cate
 		return &model.CompositionAnalysis{}, fmt.Errorf("base64デコードエラー: %w", err)
 	}
 
+	// saveLocation が true なのに、座標が送られてこなかった場合のチェック
+	if saveLocation {
+		if err := utils.ValidateLatLng(lat, lng); err != nil {
+			// エラーを返すのではなく、ログを出して保存フラグを折る（保存しないことにする）
+			log.Printf("WARNING: 座標が無効なため、位置情報の保存をスキップします: %v", err)
+			saveLocation = false
+		}
+	}
+
 	g, ctx := errgroup.WithContext(ctx)
 	var advice *model.CompositionAnalysis
 
@@ -61,29 +70,6 @@ func (a *ImageAnalyzer) AnalyzeImage(ctx context.Context, userId uuid.UUID, cate
 		advice = res
 		return nil
 	})
-
-	// if lat != nil {
-	// 	latVal = *lat
-	// }
-	// if lng != nil {
-	// 	lngVal = *lng
-	// }
-
-	// saveLocation が true なのに、座標が送られてこなかった場合のチェック
-	if saveLocation {
-		if err := utils.ValidateLatLng(lat, lng); err != nil {
-			return &model.CompositionAnalysis{}, fmt.Errorf("無効な座標: 最小値が最大値より大きいです")
-		}
-		// if lat == nil || lng == nil {
-		// 	// 「保存する」と言っているのに座標がないのは矛盾なのでエラーにする
-		// 	return &model.CompositionAnalysis{}, fmt.Errorf("位置情報保存が要求されましたが、座標データ(lat/lng)が不足しています")
-		// }
-
-		// // バリデーションには実体(latVal, lngVal)を渡す
-		// if err := utils.ValidateLatLng(latVal, lngVal); err != nil {
-		// 	return &model.CompositionAnalysis{}, fmt.Errorf("無効な座標: %w", err)
-		// }
-	}
 
 	// --- ゴールーチンB: DB保存 (軽い処理) ---
 	if saveLocation {
