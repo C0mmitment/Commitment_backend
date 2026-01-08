@@ -41,6 +41,27 @@ func (a *ImageAnalyzer) AnalyzeImage(ctx context.Context, userId uuid.UUID, cate
 	// // 座標の実体を入れる変数を定義（デフォルト0.0）
 	// var latVal, lngVal float64
 
+	locationEntity, _ := model.NewAddLocation(userId, lat, lng, geohash)
+
+	// 1. エンコーディング/変換ロジック (ここではBase64デコード)
+	imageBytes, err := base64.StdEncoding.DecodeString(base64Image)
+	if err != nil {
+		return &model.CompositionAnalysis{}, fmt.Errorf("base64デコードエラー: %w", err)
+	}
+
+	g, ctx := errgroup.WithContext(ctx)
+	var advice *model.CompositionAnalysis
+
+	// --- ゴールーチンA: AIコネクタ (重い処理) ---
+	g.Go(func() error {
+		res, err := a.Connector.GetCompositionAdvice(ctx, category, imageBytes, mimeType)
+		if err != nil {
+			return fmt.Errorf("AIコネクタ処理エラー: %w", err)
+		}
+		advice = res
+		return nil
+	})
+
 	// if lat != nil {
 	// 	latVal = *lat
 	// }
@@ -63,27 +84,6 @@ func (a *ImageAnalyzer) AnalyzeImage(ctx context.Context, userId uuid.UUID, cate
 		// 	return &model.CompositionAnalysis{}, fmt.Errorf("無効な座標: %w", err)
 		// }
 	}
-
-	locationEntity, _ := model.NewAddLocation(userId, lat, lng, geohash)
-
-	// 1. エンコーディング/変換ロジック (ここではBase64デコード)
-	imageBytes, err := base64.StdEncoding.DecodeString(base64Image)
-	if err != nil {
-		return &model.CompositionAnalysis{}, fmt.Errorf("base64デコードエラー: %w", err)
-	}
-
-	g, ctx := errgroup.WithContext(ctx)
-	var advice *model.CompositionAnalysis
-
-	// --- ゴールーチンA: AIコネクタ (重い処理) ---
-	g.Go(func() error {
-		res, err := a.Connector.GetCompositionAdvice(ctx, category, imageBytes, mimeType)
-		if err != nil {
-			return fmt.Errorf("AIコネクタ処理エラー: %w", err)
-		}
-		advice = res
-		return nil
-	})
 
 	// --- ゴールーチンB: DB保存 (軽い処理) ---
 	if saveLocation {
