@@ -3,6 +3,8 @@ package controller
 import (
 	"net/http"
 
+	"github.com/google/uuid"
+
 	"github.com/86shin/commit_goback/application/usecase"
 	"github.com/86shin/commit_goback/interfaces/controller/dto"
 	"github.com/labstack/echo/v4"
@@ -61,17 +63,23 @@ func (h *LocationHandler) GetHeatmapData(c echo.Context) error {
 func (h *LocationHandler) DeleteHeatmap(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	var req dto.DeleteHeatmapRequest
-	if err := c.Bind(&req); err != nil {
-		res := dto.DeleteHeatmapResponse{
+	// 1. URLから文字列を取得
+	uuidStr := c.Param("uuid")
+
+	// 2. 文字列をUUID型に変換（ここでフォーマットチェックも兼ねる）
+	uid, err := uuid.Parse(uuidStr)
+	if err != nil {
+		// uuid.Parseに失敗したらここに来る
+		return c.JSON(http.StatusBadRequest, dto.DeleteHeatmapResponse{
 			Status:  "400",
-			Message: "無効なリクエストフォーマット",
+			Message: "無効なUUIDフォーマット",
 			Error:   err.Error(),
-		}
-		return c.JSON(http.StatusBadRequest, res)
+		})
 	}
 
-	err := h.Location.DeleteHeatmapUsecase(ctx, req.UserId)
+	// 3. 変換できた uid をUsecaseに渡す (req.UserId ではなく uid)
+	// ※ここで := ではなく = を使う（errは上で定義済みなので再利用）
+	err = h.Location.DeleteHeatmapUsecase(ctx, uid)
 	if err != nil {
 		res := dto.DeleteHeatmapResponse{
 			Status:  "500",
