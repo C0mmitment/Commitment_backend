@@ -1,7 +1,7 @@
 import multer from 'multer';
 import path from 'path';
 
-// メモリストレージ
+// メモリストレージ (Goへ転送するためメモリに保持)
 const storage = multer.memoryStorage();
 
 // 許可するMIMEタイプ
@@ -10,7 +10,6 @@ const ALLOWED_MIME_TYPES = [
   'image/png',
 ];
 
-// 許可する拡張子
 const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png'];
 
 // ファイルフィルタ
@@ -21,26 +20,62 @@ const fileFilter = (req, file, cb) => {
   const extOk = ALLOWED_EXTENSIONS.includes(ext);
 
   if (!mimeOk || !extOk) {
-    return cb(
-      console.error('Invalid file type. Only JPG, PNG, WEBP images are allowed.'),
-      false
-    );
+    // ここでエラーオブジェクトを作成
+    const error = new Error('Invalid file type. Only JPG, PNG, WEBP images are allowed.');
+    error.code = 'LIMIT_FILE_TYPES'; // 判別用の独自コード
+    return cb(error, false);
   }
 
   cb(null, true);
 };
 
-// multer 設定
+// multer 本体設定
 const upload = multer({
   storage: storage,
-
   // ファイルサイズ制限（例：5MB）
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB
   },
-
   fileFilter: fileFilter,
 });
 
-// 単一ファイルアップロード
-export const uploadSinglePhoto = upload.single('photo');
+const uploadHandler = upload.single('photo');
+
+export const uploadSinglePhoto = (req, res, next) => {
+  uploadHandler(req, res, (err) => {
+    if (err) {
+      // 1. ファイル形式エラー 
+      if (err.code === 'LIMIT_FILE_TYPES') {
+        return res.status(400).json({ 
+          error: 'ファイル形式エラー', 
+          message: err.message 
+        });
+      }
+
+      // 2. 容量制限エラー (limitsで発生)
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ 
+          error: 'ファイルサイズエラー', 
+          message: 'ファイルサイズは5MB以下にしてください。' 
+        });
+      }
+
+      // 3. その他のMulterエラー（フィールド名間違いなど）
+      if (err instanceof multer.MulterError) {
+        return res.status(400).json({ 
+          error: 'アップロードエラー', 
+          message: err.message 
+        });
+      }
+
+      // 4. 想定外のエラー
+      return res.status(500).json({ 
+        error: 'サーバーエラー', 
+        message: '画像のアップロード中に不明なエラーが発生しました。' 
+      });
+    }
+
+    // エラーがなければ次の処理（handlerなど）へ進む
+    next();
+  });
+};
