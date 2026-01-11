@@ -27,7 +27,7 @@ const advice = async (base64Image, mimeType, category, uuid, geoResult, isGather
 
 
         // Goサーバーへリクエストを送信
-        const goResponse = await axios.post(`${GO_API_URL}/advice`, {
+        const goResponse = await axios.post(`${GO_API_URL}/analysis/advice`, {
             user_uuid: uuid,
             category: category,
             image_data_base64: base64Image,
@@ -94,7 +94,7 @@ const gathering = async (lat,long) => {
 
 const deleteLocationData = async (uuid) => {
     try {
-        const goResponse = await axios.delete(`${GO_API_URL}/location/delete/${uuid}`);
+        const goResponse = await axios.delete(`${GO_API_URL}/location/${uuid}`);
         
         if(goResponse.status === 200) {
             apiLatestResult.push( {status: 'OK' });

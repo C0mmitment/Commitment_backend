@@ -5,12 +5,6 @@ const advice = async (req, res) => {
     // uploadSinglePhoto ミドルウェアによって req.file にデータが格納される
     console.log('[Node.js] /advice ハンドラが実行されました。');
     
-    if (!req.file) {
-        console.log('[Node.js] 画像ファイルがありません。');
-        // ご提示の形式に合わせる
-        return res.status(400).json({ status: 400, message: '画像ファイルがありません。', error: 'No file uploaded.' });
-    }
-
     const gatheringStr = xss(req.body.gathering);
     const isGathering = gatheringStr === 'true';
 
@@ -26,9 +20,6 @@ const advice = async (req, res) => {
 
     if(isGathering) {
         geoResult = await service.gathering(latFloat,longFloat);
-        console.log(geoResult.latitude);
-        console.log(geoResult.longitude);
-        console.log(geoResult.geohash);
     }
 
     // 画像バッファをBase64にエンコード
