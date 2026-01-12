@@ -13,10 +13,6 @@ const location = Router();
 analysis.post('/advice', strictLimiter, uploadSinglePhoto, validateImageContent, handler.advice);
 analysis.post('/gpsTest', uploadSinglePhoto, handler.gpsTest);
 
-// テスト用
-v1.get('/gtest', handler.gtest)
-v1.post('/ptest', handler.ptest)
-
 // 位置情報
 location.get('/heatmap', normalLimiter, handler.heatmapData);
 location.delete('/:uuid',handler.deleteLocationData);

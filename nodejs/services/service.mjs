@@ -10,13 +10,10 @@ const GO_API_URL = process.env.GO_API_URL;
 
 const advice = async (base64Image, mimeType, category, uuid, geoResult, isGathering) => {
     if (!GO_API_URL) {
-        console.error('[app.mjs] エラー: GO_API_URL 環境変数が設定されていません。');
         return { status: 500, message: 'サーバー内部の設定エラーです。', error: 'GO_API_URL is not set' };
     }
 
     try {
-        console.log(`[app.mjs] Goサーバー (${GO_API_URL}) に画像データ (${mimeType}) を送信中...`);
-
         let Gat = isGathering;
 
         if(geoResult == null) {
@@ -49,7 +46,6 @@ const advice = async (base64Image, mimeType, category, uuid, geoResult, isGather
     } catch (error) {
         // Axiosエラーハンドリング (Go側が500などを返した場合)
         if (error.response) {
-            console.error('[app.mjs] Goサーバーエラーレスポンス:', error.response.data);
             apiLatestResult.push( {status: 'NG' });
             if (apiLatestResult.length > 50) {
                 apiLatestResult.shift(); 
@@ -65,7 +61,6 @@ const advice = async (base64Image, mimeType, category, uuid, geoResult, isGather
             apiLatestResult.shift(); 
         }
         // Goサーバーとの通信自体に失敗した場合
-        console.error('[app.mjs] Goサーバーとの通信エラー:', error.message || error);
         return { status: 500, message: 'バックエンドサーバー(Go)との通信に失敗しました。', error: error.message };
     }
 }
