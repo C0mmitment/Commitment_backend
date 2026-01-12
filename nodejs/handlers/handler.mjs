@@ -3,8 +3,6 @@ import xss from 'xss';
 
 const advice = async (req, res) => {
     // uploadSinglePhoto ミドルウェアによって req.file にデータが格納される
-    console.log('[Node.js] /advice ハンドラが実行されました。');
-    
     const gatheringStr = xss(req.body.gathering);
     const isGathering = gatheringStr === 'true';
 
@@ -26,14 +24,11 @@ const advice = async (req, res) => {
     const base64Image = req.file.buffer.toString('base64');
     const mimeType = req.file.mimetype;
 
-    console.log(`[Node.js] サービス層 (advice) を呼び出します...`);
-
     // サービス層の関数を呼び出す (try...catch はサービス層が担当)
     const result = await service.advice(base64Image, mimeType, category, uuid, geoResult, isGathering);
 
     // サービス層からの結果(result.status)に基づいてレスポンスを返す
     if (result.status === 200) {
-        console.log('[Node.js] Goサーバーからレスポンスを受信。フロントに返します。');
         // 成功時はGoサーバーのデータをそのまま返す
         res.status(result.status).json(result.data);
     } else {
@@ -48,8 +43,6 @@ const advice = async (req, res) => {
 
 const deleteLocationData = async (req,res) => {
     const uuid = xss(req.params.uuid);
-    console.log('データ削除:',uuid);
-
     const result = await service.deleteLocationData(uuid);
 
     res.status(result.status).json({
@@ -74,42 +67,7 @@ const heatmapData = async (req, res) => {
 
         res.status(result.status).json(result.data || { message: result.message, error: result.error });
     } catch (error) {
-        console.error('[handler.js] heatmapData エラー:', error.message);
         res.status(500).json({ status: 500, message: '内部サーバーエラー', error: error.message });
-    }
-}
-
-const gtest = async(req, res) => {
-    res.status(200).json({
-        status: 200,
-        message: "getのテストだよ",
-    });
-}
-
-const ptest = async(req, res) => {
-    const t_text = xss(req.body.t_text)
-    res.status(200).json({
-        status: 200,
-        message: "postのテストだよ",
-        data: t_text,
-    });
-}
-
-const gpsTest = async(req, res) => {    
-
-    const geoResult = await service.gathering(req.file.buffer);
-
-    if(geoResult == null) {
-        res.status(200).json({
-            status: 200,
-            message: "GPSデータが存在しません。",
-        });
-    } else {
-        res.status(200).json({
-            status: 200,
-            message: "GPSデータが存在します。",
-            data: geoResult
-        });
     }
 }
 
@@ -126,8 +84,5 @@ export default {
     advice,
     deleteLocationData,
     heatmapData,
-    gtest,
-    ptest,
-    gpsTest,
     apiHealth,
 }

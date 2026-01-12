@@ -22,24 +22,18 @@ export async function extractGpsFromImage(lat,long) {
             const latitude = result.tags.GPSLatitude;
             const longitude = result.tags.GPSLongitude;
 
-            console.log(`✅ 成功: GPS情報が抽出されました`);
-            console.log(`   緯度 (Latitude): ${latitude}`);
-            console.log(`   経度 (Longitude): ${longitude}`);
-
             // 緯度と経度の両方が存在する場合、オブジェクトとして返す
             return {
                 latitude: latitude,
                 longitude: longitude
             };
         } else {
-            console.log("⚠️ 警告: この画像ファイルにはGPS情報（ジオタグ）が含まれていません。");
             return null;
         }
 
         
 
     } catch (error) {
-        console.error(`❌ エラーが発生しました: ${error.message}`);
         // ファイルが見つからない、またはExifデータの解析に失敗した場合
         return null;
     }
