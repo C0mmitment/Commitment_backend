@@ -6,12 +6,14 @@ import (
 	"strconv"
 
 	"github.com/86shin/commit_goback/application/usecase"
-	"github.com/86shin/commit_goback/infrastructure/connection/posgres"
+	"github.com/86shin/commit_goback/infrastructure/db/connection/posgres"
+
+	"github.com/86shin/commit_goback/db/migrations"
+	"github.com/86shin/commit_goback/infrastructure/db/migrate/postgres"
 	"github.com/86shin/commit_goback/infrastructure/gemini"
 	"github.com/86shin/commit_goback/infrastructure/persistence"
 	infrastructure "github.com/86shin/commit_goback/infrastructure/router"
 	"github.com/86shin/commit_goback/interfaces/controller"
-	// "yourproject/infra/repository" (将来DBを使う時のインポートを想定)
 )
 
 func main() {
@@ -22,10 +24,15 @@ func main() {
 	}
 
 	dbPortStr := os.Getenv("DB_PORT")
-	// log.Printf("DB Port: %s", dbPortStr)
 	dbPort, err := strconv.Atoi(dbPortStr)
 	if err != nil {
 		log.Fatalf("環境変数 DB_PORT の値が無効です: %v", err)
+	}
+
+	stepsStr := os.Getenv("MIGRATE_STEPS")
+	steps, err := strconv.Atoi(stepsStr)
+	if err != nil {
+		steps = 0
 	}
 
 	cfg := posgres.DBConfig{
@@ -40,11 +47,10 @@ func main() {
 		log.Fatalf("データベース接続エラー: %v", err)
 	}
 	defer posgresDB.Close()
+
+	postgres.RunMigrations(posgresDB, migrations.FS, ".", steps)
+
 	// --- 2. 依存関係の構築（DI） ---
-
-	// DB接続の抽象化を実装する場所（将来 User Repositoryを定義する場所）
-	// userRepo := repository.NewUserRepository()
-
 	// インフラ層の実装 (Gemini)
 	aiConnectorImpl, _ := gemini.NewGeminiAIService(geminiAPIKey)
 	addImgLocImpl := persistence.NewLocationRepositoryImpl(posgresDB)
@@ -55,15 +61,14 @@ func main() {
 
 	// インフラ層のコントローラー
 	imageHandler := controller.NewImageHandler(analyzerUsecase)
-	locationController := controller.NewLocationHandler(locationUsecase) // 将来のUser Controller
+	locationController := controller.NewLocationHandler(locationUsecase)
 
 	// 3. ルーティングの構築を infra/routes.go に委譲
 	routerConfig := infrastructure.RouterConfig{
 		ImageHandler:       imageHandler,
 		LocationController: locationController,
-		// UserController: userController,
 	}
-	e := infrastructure.NewRouter(routerConfig) // Echoインスタンスを取得
+	e := infrastructure.NewRouter(routerConfig)
 
 	port := os.Getenv("GO_PORT")
 	if port == "" {
@@ -71,6 +76,5 @@ func main() {
 	}
 
 	log.Printf("Goサーバーがポート %s で起動しました。", port)
-	// EchoのStartメソッドでサーバーを起動
 	log.Fatal(e.Start(":" + port))
 }

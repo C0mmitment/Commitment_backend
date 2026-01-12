@@ -4,7 +4,7 @@
 # ==============================================================================
 # ▼ developステージ
 # ==============================================================================
-FROM golang:1.23-alpine AS develop
+FROM golang:1.25-alpine AS develop
 
 # apkのキャッシュも活用して高速化
 RUN --mount=type=cache,target=/var/cache/apk \
