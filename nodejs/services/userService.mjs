@@ -1,37 +1,51 @@
 import axios from 'axios';
 import { measure } from '../utils/utils.mjs';
-import repo from '../repositories/repository.mjs';
+import FormData from "form-data";
 
 const apiLatestResult = [];
 
 const GO_API_URL = process.env.GO_API_URL;
 
-const advice = async (base64Image, mimeType, category, uuid, geoResult, isGathering) => {
+const advice = async (file, category, uuid, geoResult, isGathering, previousAnalysis) => {
     if (!GO_API_URL) {
         return { status: 500, message: 'サーバー内部の設定エラーです。', error: 'GO_API_URL is not set' };
     }
 
     try {
-
         let Gat = isGathering;
 
         if(geoResult == null) {
             Gat = false;
         }
 
-        console.log(Gat);
+        // ★ multipart/form-data を構築
+        const form = new FormData();
 
+        // Go側: c.FormValue(...)
+        form.append('user_uuid', uuid);
+        form.append('category', category);
+        form.append('latitude', geoResult?.latitude?.toString() || '');
+        form.append('longitude', geoResult?.longitude?.toString() || '');
+        form.append('geohash', geoResult?.geohash || '');
+        form.append('save_loc', Gat.toString());
+
+        if (previousAnalysis) {
+            form.append('pre_analysis', previousAnalysis);
+        }
+
+        // Go側: c.FormFile("photo")
+        form.append('photo', file.stream, {
+            filename: file.originalname,
+            contentType: file.mimetype,
+        });
 
         // Goサーバーへリクエストを送信
-        const goResponse = await axios.post(`${GO_API_URL}/analysis/advice`, {
-            user_uuid: uuid,
-            category: category,
-            image_data_base64: base64Image,
-            mime_type: mimeType,
-            latitude: geoResult?.latitude ?? null,
-            longitude: geoResult?.longitude ?? null,
-            geohash: geoResult?.geohash ?? null,
-            save_loc: Gat
+        const goResponse = await axios.post(`${GO_API_URL}/analysis/advice`, form, {
+            headers: {
+                    ...form.getHeaders(), // Content-Type: multipart/form-data; boundary=...
+                },
+                maxContentLength: Infinity,
+                maxBodyLength: Infinity,
         });
 
         apiLatestResult.push( {status: 'OK' });
