@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { uploadSinglePhoto } from '../middleware/upload.mjs';
 import { strictLimiter, normalLimiter } from '../middleware/limit.mjs'
-import { validateImageContent } from '../middleware/sharp.mjs'
 import userHandler from '../handlers/userHandler.mjs'
 import locationHandler from '../handlers/locationHandler.mjs'
 import tipsHandler from '../handlers/tipsHandler.mjs';
@@ -13,7 +12,7 @@ const location = Router();
 const tips = Router();
 
 // ai
-analysis.post('/advice', strictLimiter, uploadSinglePhoto, validateImageContent, userHandler.advice);
+analysis.post('/advice', strictLimiter, uploadSinglePhoto, userHandler.advice);
 
 // 位置情報
 location.get('/heatmap', normalLimiter, locationHandler.heatmapData);

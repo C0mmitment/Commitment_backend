@@ -2,8 +2,8 @@ package usecase
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
+	"io"
 	"log"
 	"time"
 
@@ -17,7 +17,7 @@ import (
 
 // ImageAnalyzerUsecase はコントローラーが依存するインターフェース
 type ImageAnalyzerUsecase interface {
-	AnalyzeImage(ctx context.Context, userId uuid.UUID, category, base64Image, mimeType, geohash string, lat, lng float64, saveLocation bool) (*model.CompositionAnalysis, error)
+	AnalyzeImage(ctx context.Context, userId uuid.UUID, imageReader io.Reader, mimeType, category, geohash string, lat, lng float64, saveLocation bool, prevAnalysis *model.CompositionAnalysis) (*model.CompositionAnalysis, error)
 }
 
 // ImageAnalyzer は Usecase の実装構造体
@@ -34,7 +34,7 @@ func NewImageAnalyzer(connector service.AIConnector, heatmapRepo repository.Loca
 }
 
 // AnalyzeImage は画像分析のビジネスロジック（ユースケース）を実行します。
-func (a *ImageAnalyzer) AnalyzeImage(ctx context.Context, userId uuid.UUID, category, base64Image, mimeType, geohash string, lat, lng float64, saveLocation bool) (*model.CompositionAnalysis, error) {
+func (a *ImageAnalyzer) AnalyzeImage(ctx context.Context, userId uuid.UUID, imageReader io.Reader, mimeType, category, geohash string, lat, lng float64, saveLocation bool, prevAnalysis *model.CompositionAnalysis) (*model.CompositionAnalysis, error) {
 	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
 
@@ -43,10 +43,9 @@ func (a *ImageAnalyzer) AnalyzeImage(ctx context.Context, userId uuid.UUID, cate
 
 	locationEntity, _ := model.NewAddLocation(userId, lat, lng, geohash)
 
-	// 1. エンコーディング/変換ロジック (ここではBase64デコード)
-	imageBytes, err := base64.StdEncoding.DecodeString(base64Image)
-	if err != nil {
-		return &model.CompositionAnalysis{}, fmt.Errorf("base64デコードエラー: %w", err)
+	// imageBytes はすでにバイナリなので、デコード不要
+	if imageReader == nil {
+		return &model.CompositionAnalysis{}, fmt.Errorf("画像データが空です")
 	}
 
 	// saveLocation が true なのに、座標が送られてこなかった場合のチェック
@@ -63,7 +62,7 @@ func (a *ImageAnalyzer) AnalyzeImage(ctx context.Context, userId uuid.UUID, cate
 
 	// --- ゴールーチンA: AIコネクタ (重い処理) ---
 	g.Go(func() error {
-		res, err := a.Connector.GetCompositionAdvice(ctx, category, imageBytes, mimeType)
+		res, err := a.Connector.GetCompositionAdvice(ctx, category, imageReader, mimeType, prevAnalysis)
 		if err != nil {
 			return fmt.Errorf("AIコネクタ処理エラー: %w", err)
 		}

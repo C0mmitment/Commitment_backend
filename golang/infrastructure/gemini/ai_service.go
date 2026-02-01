@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"strings"
 
@@ -31,7 +32,16 @@ func NewGeminiAIService(apiKey string) (*GeminiAIService, error) {
 }
 
 // GetCompositionAdvice は AIConnector のインターフェースを実装します。
-func (s *GeminiAIService) GetCompositionAdvice(ctx context.Context, category string, imageBytes []byte, mimeType string) (*model.CompositionAnalysis, error) {
+func (s *GeminiAIService) GetCompositionAdvice(ctx context.Context, category string, imageReader io.Reader, mimeType string, prevAnalysis *model.CompositionAnalysis) (*model.CompositionAnalysis, error) {
+
+	// ★ ここでだけバイト化（SDKの制約）
+	imageBytes, err := io.ReadAll(imageReader)
+	if err != nil {
+		return nil, fmt.Errorf("画像ストリームの読み込みに失敗: %w", err)
+	}
+	if len(imageBytes) == 0 {
+		return nil, fmt.Errorf("画像データが空です")
+	}
 
 	originalMimeType := strings.ToLower(mimeType)
 	finalMediaType := "image/jpeg" // APIの仕様上 "image/" プレフィックス推奨
@@ -50,6 +60,10 @@ func (s *GeminiAIService) GetCompositionAdvice(ctx context.Context, category str
 	genModel.ResponseSchema = &genai.Schema{
 		Type: genai.TypeObject,
 		Properties: map[string]*genai.Schema{
+			"reason": {
+				Type:        genai.TypeString,
+				Description: "なぜそのアドバイスが必要なのか、現状の課題や原因（例：被写体が暗い、水平が取れていない、余白が多すぎる）",
+			},
 			"advice":   {Type: genai.TypeString, Description: "60文字以内の具体的で優しいアドバイス"},
 			"category": {Type: genai.TypeString},
 			"visual_cues": {
@@ -67,19 +81,60 @@ func (s *GeminiAIService) GetCompositionAdvice(ctx context.Context, category str
 					Required: []string{"target", "direction"},
 				},
 			},
+			"evaluation": {
+				Type: genai.TypeObject,
+				Properties: map[string]*genai.Schema{
+					"status": {
+						Type:        genai.TypeString,
+						Enum:        []string{"improved", "unchanged", "regressed", "first_time"},
+						Description: "improved:改善, unchanged:変化なし, regressed:悪化, first_time:初回",
+					},
+					"comment": {Type: genai.TypeString, Description: "前回の課題(reason)が解決されたかどうかのコメント"},
+				},
+				Required: []string{"status", "comment"},
+			},
 		},
-		Required: []string{"advice", "category", "visual_cues"},
+		Required: []string{"reason", "advice", "category", "visual_cues", "evaluation"},
 	}
 
 	// 3. プロンプト設計 (フォーマット指示を削除した軽量版)
-	promptTemplate := `あなたはプロの写真家です。画像を見て構図改善のアドバイスをください。
+	// プロンプト設計
+	basePrompt := `あなたはプロの写真家です。画像を見て構図改善のアドバイスをください。
     カテゴリ: %s
     
-    ### 判断基準:
-    - directionの "forward"/"backward" はズームでも撮影者の移動でも可。
-    - adviceは日本語で、専門用語を使わず優しい口調にしてください。`
+    ### ルール:
+    - "reason" には「何が良くないか（原因）」を簡潔に書いてください。
+    - "advice" には「どう動けばいいか（解決策）」を優しく書いてください。`
 
-	prompt := fmt.Sprintf(promptTemplate, category)
+	var prompt string
+
+	if prevAnalysis == nil {
+		// --- 初回の場合 ---
+		prompt = fmt.Sprintf(basePrompt+`
+        
+        現在は「初回撮影」です。
+        evaluation.status は "first_time" に設定してください。
+        evaluation.comment は「撮影ありがとうございます！まずは今の状態を分析します」等の挨拶にしてください。`, category)
+	} else {
+		// --- 比較の場合 ---
+		prevJSONBytes, _ := json.Marshal(prevAnalysis)
+
+		// ★ プロンプト強化: 前回の「Reason（課題）」を解消できたかチェックさせる
+		prompt = fmt.Sprintf(basePrompt+`
+
+        これは前回アドバイスを受けた後の「修正版」の写真です。
+        以下の【前回データ】と比較して評価してください。
+
+        【前回データ】
+        %s
+
+        ### 評価のポイント:
+        1. 前回の "reason"（課題）が、今回の写真で解消されているか確認してください。
+        2. 解消されていれば "status": "improved" とし、"comment" で褒めてください。
+        3. まだ解消されていない、あるいは別の問題が出た場合は、新しい "reason" と "advice" を出力してください。
+        `, category, string(prevJSONBytes))
+	}
+	// prompt := fmt.Sprintf(promptTemplate, category)
 
 	// 4. リクエスト実行
 	resp, err := genModel.GenerateContent(ctx,
