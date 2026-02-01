@@ -21,10 +21,6 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     go mod download
 
 COPY . .
-# COPY start.sh /usr/local/bin/start.sh
-# RUN chmod +x /usr/local/bin/start.sh
-
-# CMD ["/usr/local/bin/start.sh"]
 
 CMD ["air", "-c", ".air.toml"]
 
@@ -40,7 +36,7 @@ WORKDIR /usr/src/app
 # -trimpath: ファイルパス情報を削除してセキュリティ向上
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg/mod \
-    CGO_ENABLED=0 GOOS=linux go build \
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -ldflags="-s -w" \
     -trimpath \
     -o /commit-server \

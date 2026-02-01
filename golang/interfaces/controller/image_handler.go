@@ -1,8 +1,12 @@
 package controller
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
+
+	"github.com/google/uuid"
 
 	"github.com/86shin/commit_goback/application/usecase"
 	"github.com/86shin/commit_goback/domain/model"
@@ -23,38 +27,77 @@ func NewImageHandler(analyzer usecase.ImageAnalyzerUsecase) *ImageHandler {
 func (h *ImageHandler) AnalyzeImageEchoHandler(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	// 1. リクエストのバインド
-	var req dto.ImageRequest
-	if err := c.Bind(&req); err != nil {
+	// サイズ制限（例: 5MB）
+	c.Request().Body = http.MaxBytesReader(c.Response(), c.Request().Body, 5<<20)
+
+	header, err := c.FormFile("photo")
+	if err != nil {
 		return c.JSON(http.StatusBadRequest, dto.AnalysisResponse{
 			Status:  "400",
-			Message: "無効なリクエストフォーマットです",
-			Analysis: &model.CompositionAnalysis{
-				Advice:   err.Error(),
-				Category: req.Category, // 空文字列
-			},
+			Message: "画像ファイルがありません",
 		})
 	}
 
+	// ファイルを開く
+	file, err := header.Open()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, dto.AnalysisResponse{
+			Status:  "500",
+			Message: "画像ファイルを開けませんでした",
+		})
+	}
+	defer file.Close()
+
+	// フォーム値取得
+	userUUIDStr := c.FormValue("user_uuid")
+	category := c.FormValue("category")
+	latStr := c.FormValue("latitude")
+	lngStr := c.FormValue("longitude")
+	geo := c.FormValue("geohash")
+	saveLocStr := c.FormValue("save_loc")
+
+	userUUID, err := uuid.Parse(userUUIDStr)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, dto.AnalysisResponse{
+			Status:  "400",
+			Message: "user_uuid が不正です",
+		})
+	}
+
+	lat, _ := strconv.ParseFloat(latStr, 64)
+	lng, _ := strconv.ParseFloat(lngStr, 64)
+	saveLoc := saveLocStr == "true"
+
+	prevAnalysisJSON := c.FormValue("pre_analysis")
+	var prevAnalysis *model.CompositionAnalysis
+
+	if prevAnalysisJSON != "" {
+		var temp model.CompositionAnalysis
+		if err := json.Unmarshal([]byte(prevAnalysisJSON), &temp); err == nil {
+			prevAnalysis = &temp
+		} else {
+			log.Printf("前回データのパース失敗: %v", err)
+		}
+	}
+
+	mimeType := header.Header.Get("Content-Type")
+
 	// 2. アプリケーション層（Usecase）への処理委譲
-	// ここで string ではなく、構造体 (AnalysisResult) が返ってくるように実装します
-	analysisResult, err := h.Analyzer.AnalyzeImage(ctx, req.UserId, req.Category, req.Base64Image, req.MimeType,
-		req.Geo, req.Lat, req.Lng, req.SaveLoc)
+	analysisResult, err := h.Analyzer.AnalyzeImage(ctx, userUUID, file, mimeType, category, geo, lat, lng, saveLoc, prevAnalysis)
 
 	if err != nil {
 		log.Printf("[Analysis Error] %v", err)
-		// エラー時のフォールバック（空の構造体にエラーメッセージだけ入れるなど）
 		return c.JSON(http.StatusInternalServerError, dto.AnalysisResponse{
 			Status:  "500", // またはエラーを示すコード
 			Message: "写真の構図に関するアドバイスを取得できませんでした。",
 			Analysis: &model.CompositionAnalysis{
 				Advice:   err.Error(),
-				Category: req.Category, // 空文字列
+				Category: category,
 			},
 		})
 	}
 
-	// 3. レスポンスの整形と返却
+	// レスポンスの整形と返却
 	res := dto.AnalysisResponse{
 		Status:   "200",
 		Message:  "写真の構図に関するアドバイスを取得しました。",
@@ -62,6 +105,5 @@ func (h *ImageHandler) AnalyzeImageEchoHandler(c echo.Context) error {
 	}
 
 	// JSONレスポンスの返却
-	// c.JSON は error を返すので、関数の戻り値としてそのまま返します
 	return c.JSON(http.StatusOK, res)
 }
