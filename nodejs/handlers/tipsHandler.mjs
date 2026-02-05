@@ -8,8 +8,9 @@ export const getTips = async (req, res) => {
         const result = await tipsService.getTips();
 
         return res.status(result.status).json({
+            status: result.status,
             message: result.message,
-            data: result.data ?? null,
+            tips: result.tips ?? null,
             error: result.error ?? null
         });
 

@@ -15,25 +15,24 @@ import (
 )
 
 // データベース接続クライアントのラッパー
-type LocationrepositoryImpl struct {
+type LocationRepositoryImpl struct {
 	Client    *sql.DB // 例として標準のsql.DBを使用
 	TableName string
 }
 
 func NewLocationRepositoryImpl(db *sql.DB) repository.LocationRepojitory {
-	tableName := os.Getenv("TABLE_NAME")
+	tableName := os.Getenv("TABLE_NAME_P")
 	if tableName == "" {
 		panic("TABLE_NAME が環境変数に設定されていません")
 	}
 
-	return &LocationrepositoryImpl{
-		// 受け取った接続オブジェクトをそのまま Client フィールドに設定
+	return &LocationRepositoryImpl{
 		Client:    db,
 		TableName: tableName,
 	}
 }
 
-func (p *LocationrepositoryImpl) AdditionImageLocation(ctx context.Context, loc *model.AddLocation) error {
+func (p *LocationRepositoryImpl) AdditionImageLocation(ctx context.Context, loc *model.AddLocation) error {
 	if !utils.ValidateTableName(p.TableName) {
 		return fmt.Errorf("不正なテーブル名です")
 	}
@@ -78,7 +77,7 @@ func (p *LocationrepositoryImpl) AdditionImageLocation(ctx context.Context, loc 
 	return nil
 }
 
-func (p *LocationrepositoryImpl) GetHeatmapLocation(ctx context.Context, minLat, minLon, maxLat, maxLon float64) ([]*model.HeatmapPoint, error) {
+func (p *LocationRepositoryImpl) GetHeatmapLocation(ctx context.Context, minLat, minLon, maxLat, maxLon float64) ([]*model.HeatmapPoint, error) {
 	if !utils.ValidateTableName(p.TableName) {
 		return nil, fmt.Errorf("不正なテーブル名です")
 	}
@@ -94,12 +93,10 @@ func (p *LocationrepositoryImpl) GetHeatmapLocation(ctx context.Context, minLat,
 
 	rows, err := p.Client.QueryContext(ctx, query, minLon, minLat, maxLon, maxLat)
 	if err != nil {
-		return nil, fmt.Errorf("ヒートマップ用の緯度・経度データの取得に失敗しました： %w", err)
+		return nil, fmt.Errorf("ヒートマップ用の緯度・経度データの取得に失敗しました。")
 	}
 	defer rows.Close()
 
-	// 3. 取得結果をDomainモデルに詰める
-	// ここで make で容量を確保しておくと少し速いです
 	locations := make([]*model.HeatmapPoint, 0)
 
 	for rows.Next() {
@@ -119,7 +116,7 @@ func (p *LocationrepositoryImpl) GetHeatmapLocation(ctx context.Context, minLat,
 	return locations, nil
 }
 
-func (p *LocationrepositoryImpl) DeleteHeatmapLocation(ctx context.Context, user_id uuid.UUID) error {
+func (p *LocationRepositoryImpl) DeleteHeatmapLocation(ctx context.Context, user_id uuid.UUID) error {
 	if !utils.ValidateTableName(p.TableName) {
 		return fmt.Errorf("不正なテーブル名です")
 	}

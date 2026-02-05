@@ -54,7 +54,7 @@ func (h *LocationHandler) GetHeatmapData(c echo.Context) error {
 	response := dto.GetHeatmapResponse{
 		Status:   "200",
 		Message:  "ヒートマップデータ取得成功",
-		Heatmaps: points, // ここにリストをセット
+		Heatmaps: points,
 	}
 
 	return c.JSON(http.StatusOK, response)
