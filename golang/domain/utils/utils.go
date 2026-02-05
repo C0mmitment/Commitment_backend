@@ -21,6 +21,8 @@ func ValidateTableName(name string) bool {
 	switch name {
 	case "photo_locations":
 		return true
+	case "tips":
+		return true
 	default:
 		return false
 	}

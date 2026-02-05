@@ -51,23 +51,27 @@ func main() {
 	postgres.RunMigrations(posgresDB, migrations.FS, ".", steps)
 
 	// --- 2. 依存関係の構築（DI） ---
-	// インフラ層の実装 (Gemini)
 	aiConnectorImpl, _ := gemini.NewGeminiAIService(geminiAPIKey)
 	addImgLocImpl := persistence.NewLocationRepositoryImpl(posgresDB)
+	tipsImpl := persistence.NewTipsListRepositoryImpl(posgresDB)
 
 	// アプリケーション層のサービス
 	analyzerUsecase := usecase.NewImageAnalyzer(aiConnectorImpl, addImgLocImpl)
 	locationUsecase := usecase.NewAdditionLocation(addImgLocImpl)
+	tipsListUseCase := usecase.NewTipsListUsecase(tipsImpl)
 
 	// インフラ層のコントローラー
 	imageHandler := controller.NewImageHandler(analyzerUsecase)
 	locationController := controller.NewLocationHandler(locationUsecase)
+	tipsController := controller.NewTipsHandler(tipsListUseCase)
 
 	// 3. ルーティングの構築を infra/routes.go に委譲
 	routerConfig := infrastructure.RouterConfig{
 		ImageHandler:       imageHandler,
 		LocationController: locationController,
+		TipsController:     tipsController,
 	}
+
 	e := infrastructure.NewRouter(routerConfig)
 
 	port := os.Getenv("GO_PORT")

@@ -24,7 +24,7 @@ const getTips = async () => {
         return {
             status: 200,
             message: 'tips取得成功',
-            data: goResponse.data
+            tips: goResponse.data
         };
 
     } catch (error) {

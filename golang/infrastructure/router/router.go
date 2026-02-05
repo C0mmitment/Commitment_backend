@@ -11,7 +11,7 @@ import (
 type RouterConfig struct {
 	ImageHandler       *controller.ImageHandler
 	LocationController *controller.LocationHandler
-	// UserController *controller.UserController // 将来のUser Controllerの依存関係
+	TipsController     *controller.TipsHandler
 }
 
 // NewRouter は依存関係を受け取り、Echoインスタンスを構築して返します。
@@ -21,15 +21,19 @@ func NewRouter(cfg RouterConfig) *echo.Echo {
 	v1 := e.Group("/api/v1")
 	analysis := v1.Group("/analysis")
 	location := v1.Group("/location")
+	tips := v1.Group("/tips")
 
-	// --- 既存の画像分析ルート ---
+	// --- 画像分析ルート ---
 	analysis.POST("/advice", cfg.ImageHandler.AnalyzeImageEchoHandler)
 
-	// --- 画像位置情報追加ルート ---
+	// --- 画像位置情報ルート ---
 	location.GET("/heatmap", cfg.LocationController.GetHeatmapData)
 	location.DELETE("/:uuid", cfg.LocationController.DeleteHeatmap)
+
+	// --- tips情報ルート ---
+	tips.GET("/list", cfg.TipsController.TipsList)
+
 	// --- ユーザー関連ルートの準備（将来用） ---
-	// User機能追加時に、以下を適切なコントローラーメソッドに置き換えます。
 	e.GET("/users", dummyUserListEchoHandler)
 	e.POST("/users", dummyUserCreateEchoHandler)
 
