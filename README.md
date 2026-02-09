@@ -53,7 +53,7 @@ Nodejs,Go,Pythonのハイブリッド仕様で高速化を実現(予定)。
 
 
 ## 📂構成
-![Flow](Docs/Resources/SystemFlow.svg)
+![Flow](Docs/Resources/SystemFlow.png)
 
 ## 📊開発状況
 
