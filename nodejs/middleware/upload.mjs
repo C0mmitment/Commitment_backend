@@ -70,8 +70,7 @@ export const uploadSinglePhoto = (req, res, next) => {
                 try {
                     // Sharp で処理
                     let processedBuffer = await sharp(buffer)
-                        .resize({ width: 256, withoutEnlargement: true })
-                        .grayscale()
+                        .resize({ width: 720, withoutEnlargement: true })
                         .withMetadata({ exif: undefined })
                         .png()
                         .toBuffer();
