@@ -14,7 +14,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// ImageHandler はコントローラー層の構造体
 type ImageHandler struct {
 	Analyzer usecase.ImageAnalyzerUsecase
 }
@@ -23,11 +22,9 @@ func NewImageHandler(analyzer usecase.ImageAnalyzerUsecase) *ImageHandler {
 	return &ImageHandler{Analyzer: analyzer}
 }
 
-// AnalyzeImageEchoHandler は Echo フレームワーク用の HTTP ハンドラーです。
 func (h *ImageHandler) AnalyzeImageEchoHandler(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	// サイズ制限（例: 5MB）
 	c.Request().Body = http.MaxBytesReader(c.Response(), c.Request().Body, 5<<20)
 
 	header, err := c.FormFile("photo")
@@ -48,7 +45,6 @@ func (h *ImageHandler) AnalyzeImageEchoHandler(c echo.Context) error {
 	}
 	defer file.Close()
 
-	// フォーム値取得
 	userUUIDStr := c.FormValue("user_uuid")
 	category := c.FormValue("category")
 	latStr := c.FormValue("latitude")
@@ -68,12 +64,12 @@ func (h *ImageHandler) AnalyzeImageEchoHandler(c echo.Context) error {
 	lng, _ := strconv.ParseFloat(lngStr, 64)
 	saveLoc := saveLocStr == "true"
 
-	prevAnalysisJSON := c.FormValue("pre_analysis")
-	var prevAnalysis *model.CompositionAnalysis
+	prevJSON := c.FormValue("pre_analysis")
+	var prevAnalysis *model.Comparison
 
-	if prevAnalysisJSON != "" {
-		var temp model.CompositionAnalysis
-		if err := json.Unmarshal([]byte(prevAnalysisJSON), &temp); err == nil {
+	if prevJSON != "" {
+		var temp model.Comparison
+		if err := json.Unmarshal([]byte(prevJSON), &temp); err == nil {
 			prevAnalysis = &temp
 		} else {
 			log.Printf("前回データのパース失敗: %v", err)
@@ -82,13 +78,12 @@ func (h *ImageHandler) AnalyzeImageEchoHandler(c echo.Context) error {
 
 	mimeType := header.Header.Get("Content-Type")
 
-	// 2. アプリケーション層（Usecase）への処理委譲
 	analysisResult, err := h.Analyzer.AnalyzeImage(ctx, userUUID, file, mimeType, category, geo, lat, lng, saveLoc, prevAnalysis)
 
 	if err != nil {
 		log.Printf("[Analysis Error] %v", err)
 		return c.JSON(http.StatusInternalServerError, dto.AnalysisResponse{
-			Status:  "500", // またはエラーを示すコード
+			Status:  "500",
 			Message: "写真の構図に関するアドバイスを取得できませんでした。",
 			Analysis: &model.CompositionAnalysis{
 				Advice:   err.Error(),
@@ -97,13 +92,11 @@ func (h *ImageHandler) AnalyzeImageEchoHandler(c echo.Context) error {
 		})
 	}
 
-	// レスポンスの整形と返却
 	res := dto.AnalysisResponse{
 		Status:   "200",
 		Message:  "写真の構図に関するアドバイスを取得しました。",
-		Analysis: analysisResult, // ポインタで受け取った場合は実体を入れる
+		Analysis: analysisResult,
 	}
 
-	// JSONレスポンスの返却
 	return c.JSON(http.StatusOK, res)
 }
