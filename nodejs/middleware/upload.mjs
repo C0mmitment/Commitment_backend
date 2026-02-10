@@ -70,9 +70,9 @@ export const uploadSinglePhoto = (req, res, next) => {
                 try {
                     // Sharp で処理
                     let processedBuffer = await sharp(buffer)
-                        .resize({ width: 720, withoutEnlargement: true })
+                        .resize({ width: 512, withoutEnlargement: true })
                         .withMetadata({ exif: undefined })
-                        .png()
+                        .jpeg({ quality: 80 })
                         .toBuffer();
 
                     // 微小ノイズ追加
@@ -83,10 +83,10 @@ export const uploadSinglePhoto = (req, res, next) => {
                     }
                     processedBuffer = await sharp(data, {
                         raw: { width: rawInfo.width, height: rawInfo.height, channels: rawInfo.channels }
-                    }).png().toBuffer();
+                    }).jpeg({ quality: 80 }).toBuffer();
 
                     // UUID化されたファイル名
-                    const newFilename = uuidv4() + '.png';
+                    const newFilename = uuidv4() + '.jpeg';
 
                     req.file = {
                         originalname: filename,
