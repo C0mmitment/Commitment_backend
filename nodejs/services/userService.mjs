@@ -34,8 +34,8 @@ const advice = async (file, category, uuid, geoResult, isGathering, previousAnal
         }
 
         // Go側: c.FormFile("photo")
-        form.append('photo', file.stream, {
-            filename: file.originalname,
+        form.append('photo', file.buffer, {
+            filename: file.filename,
             contentType: file.mimetype,
         });
 
