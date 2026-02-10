@@ -13,12 +13,10 @@ import (
 	"google.golang.org/api/option"
 )
 
-// GeminiAIService は domain/service.AIConnector インターフェースの実装です。
 type GeminiAIService struct {
 	Client *genai.Client
 }
 
-// NewGeminiAIService は GeminiAIService のコンストラクタです。
 func NewGeminiAIService(apiKey string) (*GeminiAIService, error) {
 	client, err := genai.NewClient(context.Background(), option.WithAPIKey(apiKey))
 	if err != nil {
@@ -26,15 +24,11 @@ func NewGeminiAIService(apiKey string) (*GeminiAIService, error) {
 		return nil, fmt.Errorf("geminiクライアントの作成に失敗: %w (apiキーの設定を確認してください)", err)
 	}
 
-	// defer client.Close() は、アプリケーションのメイン関数やDIコンテナのシャットダウン処理で行うべき
-	// ここでは、クライアントを構造体に保持して返す
 	return &GeminiAIService{Client: client}, nil
 }
 
-// GetCompositionAdvice は AIConnector のインターフェースを実装します。
-func (s *GeminiAIService) GetCompositionAdvice(ctx context.Context, category string, imageReader io.Reader, mimeType string, prevAnalysis *model.CompositionAnalysis) (*model.CompositionAnalysis, error) {
+func (s *GeminiAIService) GetCompositionAdvice(ctx context.Context, category string, imageReader io.Reader, mimeType string, prevAnalysis *model.Comparison) (*model.CompositionAnalysis, error) {
 
-	// ★ ここでだけバイト化（SDKの制約）
 	imageBytes, err := io.ReadAll(imageReader)
 	if err != nil {
 		return nil, fmt.Errorf("画像ストリームの読み込みに失敗: %w", err)
@@ -44,27 +38,35 @@ func (s *GeminiAIService) GetCompositionAdvice(ctx context.Context, category str
 	}
 
 	originalMimeType := strings.ToLower(mimeType)
-	finalMediaType := "image/jpeg" // APIの仕様上 "image/" プレフィックス推奨
+	finalMediaType := "image/jpeg"
 
-	// シンプルなMIME判定
 	if strings.Contains(originalMimeType, "png") {
 		finalMediaType = "image/png"
 	}
 
-	// 1. モデル設定 (gemini-2.5-flash)
-	modelName := "gemini-2.5-flash"
-	genModel := s.Client.GenerativeModel(modelName)
+	genModel := s.Client.GenerativeModel("gemini-2.5-flash")
 
-	// 2. JSONモードとスキーマ定義 (これでトークン節約＆高速化)
+	genModel.SafetySettings = []*genai.SafetySetting{
+		{Category: genai.HarmCategoryHarassment, Threshold: genai.HarmBlockNone},
+		{Category: genai.HarmCategoryHateSpeech, Threshold: genai.HarmBlockNone},
+		{Category: genai.HarmCategorySexuallyExplicit, Threshold: genai.HarmBlockNone},
+		{Category: genai.HarmCategoryDangerousContent, Threshold: genai.HarmBlockNone},
+	}
+	genModel.SetTemperature(0.4)
+	genModel.SetMaxOutputTokens(3000)
+
 	genModel.ResponseMIMEType = "application/json"
 	genModel.ResponseSchema = &genai.Schema{
 		Type: genai.TypeObject,
 		Properties: map[string]*genai.Schema{
 			"reason": {
 				Type:        genai.TypeString,
-				Description: "なぜそのアドバイスが必要なのか、現状の課題や原因（例：被写体が暗い、水平が取れていない、余白が多すぎる）",
+				Description: "35文字以内。簡潔に。",
 			},
-			"advice":   {Type: genai.TypeString, Description: "60文字以内の具体的で優しいアドバイス"},
+			"advice": {
+				Type:        genai.TypeString,
+				Description: "50文字以内。画面の線を使った具体的指示。",
+			},
 			"category": {Type: genai.TypeString},
 			"visual_cues": {
 				Type: genai.TypeArray,
@@ -72,100 +74,132 @@ func (s *GeminiAIService) GetCompositionAdvice(ctx context.Context, category str
 					Type: genai.TypeObject,
 					Properties: map[string]*genai.Schema{
 						"target": {Type: genai.TypeString, Enum: []string{"camera"}},
-						"direction": {
-							Type: genai.TypeString,
-							// 選択肢を固定して高速化
-							Enum: []string{"left", "right", "up", "down", "up_left", "up_right", "down_left", "down_right", "forward", "backward"},
-						},
+						"direction": {Type: genai.TypeString, Enum: []string{
+							"left", "right", "up", "down", "forward", "backward",
+							"up-left", "up-right", "down-left", "down-right",
+						}},
 					},
 					Required: []string{"target", "direction"},
 				},
 			},
-			"evaluation": {
-				Type: genai.TypeObject,
-				Properties: map[string]*genai.Schema{
-					"status": {
-						Type:        genai.TypeString,
-						Enum:        []string{"improved", "unchanged", "regressed", "first_time"},
-						Description: "improved:改善, unchanged:変化なし, regressed:悪化, first_time:初回",
-					},
-					"comment": {Type: genai.TypeString, Description: "前回の課題(reason)が解決されたかどうかのコメント"},
-				},
-				Required: []string{"status", "comment"},
+			"evaluate": {
+				Type: genai.TypeString,
+				Enum: []string{"improved", "unchanged", "regressed", "first_time"},
 			},
 		},
-		Required: []string{"reason", "advice", "category", "visual_cues", "evaluation"},
+		Required: []string{"reason", "advice", "category", "visual_cues", "evaluate"},
 	}
 
-	// 3. プロンプト設計 (フォーマット指示を削除した軽量版)
-	// プロンプト設計
-	basePrompt := `あなたはプロの写真家です。画像を見て構図改善のアドバイスをください。
-    カテゴリ: %s
-    
-    ### ルール:
-    - "reason" には「何が良くないか（原因）」を簡潔に書いてください。
-    - "advice" には「どう動けばいいか（解決策）」を優しく書いてください。`
+	const systemInst = `役割: 初心者向けプロ写真コーチ
+		UI環境: ユーザーの画面には【三分割法のグリッド線(縦2本・横2本)】が表示されている。
+
+		# 用語定義 (これ以外使うな)
+		- 「右の縦線」「左の縦線」
+		- 「上の横線」「下の横線」
+		- 「交点」: 線が交わる4つの点
+		- 「画面の中央」: 線と線の間のスペース
+		- ★禁止用語: 「真ん中の線」(存在しない)、「グリッド」「三分割法」(専門用語)
+
+		# 診断フロー (NGがあれば即回答)
+
+		1. 【光】チェック (最優先・絶対基準)
+		- 暗い / 顔に影 / 逆光 / のっぺり ならNG。
+		- NGなら構図の話はせず、光の修正だけを指示する。
+		- 例: 「顔が暗いです。明るい方(窓の方)を向いて」
+
+		2. 【構図】チェック (光が合格点の場合のみ)
+		- 基準: 被写体を「線の上」か「交点」、または「画面の中央」のいずれか最適な場所に配置する。
+		- 基本的に「日の丸構図(ど真ん中)」は避け、「左右の線」や「交点」を優先して検討すること。
+		- ただし、左右対称や集合写真など、中央が最適な場合のみ「画面の中央」を指示する。
+
+		【指示のルール】
+		- 画面に見えている「線」や「点」の位置関係で具体的に指示する。
+		- 「画面に収める」だけの指示は禁止（配置のバランスを指摘すること）。
+        1. 位置(X/Y軸)の指示:
+           - 「右」かつ「上」の修正が必要な場合は、別々に出さず「右上(up-right)」のように斜めの指示を1つ出すこと。
+           - 常に主役を「交点」や「線」に最短距離で導く方向を選ぶこと。
+
+        2. 距離(Z軸)の指示:
+           - 被写体が遠すぎる/近すぎる場合は、「前(forward)」「後ろ(backward)」を追加してよい。
+           - 例: 位置合わせで「右(right)」＋ サイズ調整で「前(forward)」＝ 2つのcueを出力。
+
+        3. 出力配列(visual_cues)の制限:
+           - 最大2つまで（方向1つ ＋ 距離1つ）。
+           - 矢印だらけにしてユーザーを混乱させないこと。
+
+		【良いアドバイスの例】
+		- ○ 「右の縦線に顔が重なるように動いて」
+		- ○ 「地平線を下側の横線に合わせてみて」
+		- ○ 「画面の中央に、二人がバランスよく収まるように」
+
+		# 出力制約
+		- reason: 35文字以内
+		- advice: 50文字以内 (「線に合わせて」等、直感的に)
+		- カテゴリ: %s`
 
 	var prompt string
-
 	if prevAnalysis == nil {
-		// --- 初回の場合 ---
-		prompt = fmt.Sprintf(basePrompt+`
-        
-        現在は「初回撮影」です。
-        evaluation.status は "first_time" に設定してください。
-        evaluation.comment は「撮影ありがとうございます！まずは今の状態を分析します」等の挨拶にしてください。`, category)
+		prompt = fmt.Sprintf(systemInst+`
+        # 状況: 初回撮影
+        evaluate: "first_time" を選択せよ。`, category)
 	} else {
-		// --- 比較の場合 ---
-		prevJSONBytes, _ := json.Marshal(prevAnalysis)
-
-		// ★ プロンプト強化: 前回の「Reason（課題）」を解消できたかチェックさせる
-		prompt = fmt.Sprintf(basePrompt+`
-
-        これは前回アドバイスを受けた後の「修正版」の写真です。
-        以下の【前回データ】と比較して評価してください。
-
-        【前回データ】
-        %s
-
-        ### 評価のポイント:
-        1. 前回の "reason"（課題）が、今回の写真で解消されているか確認してください。
-        2. 解消されていれば "status": "improved" とし、"comment" で褒めてください。
-        3. まだ解消されていない、あるいは別の問題が出た場合は、新しい "reason" と "advice" を出力してください。
-        `, category, string(prevJSONBytes))
+		prompt = fmt.Sprintf(systemInst+`
+        # 状況: 再撮影(前回比較)
+        - 前回課題: %s
+        - 前回助言: %s
+        - 前回カテゴリ: %s
+        
+        # 判定ルール:
+        1. 改善なら "improved"、変化なしなら "unchanged"、悪化なら "regressed"。
+        2. 前回のアドバイス通りに動けているか厳しく判定せよ。`,
+			category,
+			prevAnalysis.Reason,
+			prevAnalysis.Advice,
+			prevAnalysis.Category,
+		)
 	}
-	// prompt := fmt.Sprintf(promptTemplate, category)
 
-	// 4. リクエスト実行
 	resp, err := genModel.GenerateContent(ctx,
 		genai.ImageData(strings.TrimPrefix(finalMediaType, "image/"), imageBytes),
 		genai.Text(prompt),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("コンテンツ生成リクエストに失敗: %w", err)
+		return nil, fmt.Errorf("APIリクエスト失敗")
 	}
 
-	if len(resp.Candidates) == 0 || len(resp.Candidates[0].Content.Parts) == 0 {
-		return nil, fmt.Errorf("gemini APIからの応答が空です")
+	if len(resp.Candidates) == 0 {
+		return nil, fmt.Errorf("候補(Candidates)がゼロです")
 	}
 
-	// 5. 応答解析 (文字列操作不要で直接Unmarshal可能)
-	var result model.CompositionAnalysis
+	candidate := resp.Candidates[0]
+
+	if candidate.FinishReason != genai.FinishReasonStop {
+		log.Printf("生成が中断されました。")
+		if candidate.FinishReason == genai.FinishReasonSafety {
+			return nil, fmt.Errorf("セーフティフィルタにより生成がブロックされました")
+		}
+	}
 
 	responseText := ""
-	for _, part := range resp.Candidates[0].Content.Parts {
+	for _, part := range candidate.Content.Parts {
 		if txt, ok := part.(genai.Text); ok {
 			responseText = string(txt)
 			break
 		}
 	}
 
-	// ここで strings.Trim などの処理は不要になります
+	if strings.TrimSpace(responseText) == "" {
+		return nil, fmt.Errorf("AIからの応答テキストが空でした")
+	}
+	responseText = strings.ReplaceAll(responseText, "```json", "")
+	responseText = strings.ReplaceAll(responseText, "```", "")
+
+	var result model.CompositionAnalysis
 	if err := json.Unmarshal([]byte(responseText), &result); err != nil {
-		return nil, fmt.Errorf("分析結果のjsonパースに失敗しました: %w", err)
+		log.Printf("JSON Parse Error! Raw: %s", responseText)
+		return nil, fmt.Errorf("JSONパース失敗")
 	}
 
-	// カテゴリの補完
 	if result.Category == "" {
 		result.Category = category
 	}
