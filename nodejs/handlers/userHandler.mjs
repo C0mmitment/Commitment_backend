@@ -16,13 +16,19 @@ const advice = async (req, res) => {
 
     const previousAnalysis = req.body.pre_analysis || '';
 
+    console.log(uuid);
+    console.log(category);
+    console.log(latFloat);
+    console.log(longFloat);
+    console.log(previousAnalysis);
+
     let geoResult = null;
 
-    if(isGathering) {
-        geoResult = await locationService.gathering(latFloat,longFloat);
+    if (isGathering) {
+        geoResult = await locationService.gathering(latFloat, longFloat);
     }
 
-    const file = req.file; 
+    const file = req.file;
 
     if (!file) {
         return res.status(400).json({
@@ -45,7 +51,7 @@ const advice = async (req, res) => {
     }
 }
 
-const apiHealth = async(req, res) => {
+const apiHealth = async (req, res) => {
     const result = await userService.apiHealth();
     res.status(result.status).json({
         status: result.status,
@@ -54,7 +60,20 @@ const apiHealth = async(req, res) => {
     });
 }
 
+const test = async (req, res) => {
+    if (!req.file || !req.file.buffer) {
+        return res.status(400).send('ファイルがありません');
+    }
+
+    res.setHeader('Content-Type', req.file.mimetype);
+    res.setHeader('Content-Length', req.file.buffer.length);
+    res.send(req.file.buffer);
+};
+
+
+
 export default {
     advice,
     apiHealth,
+    test,
 }

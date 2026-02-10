@@ -25,6 +25,9 @@ v1.get('/health', userHandler.apiHealth);
 // ティップス用
 tips.get('/list', tipsHandler.getTips);
 
+// 画像テスト用
+v1.post('/test', strictLimiter, uploadSinglePhoto, userHandler.test);
+
 // ルーティング階層
 router.use('/v1', v1);
 v1.use('/analysis', analysis);
