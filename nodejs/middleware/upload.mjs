@@ -2,6 +2,7 @@ import Busboy from 'busboy';
 import path from 'path';
 import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
+import { createWorker } from 'tesseract.js';
 
 // 定数設定
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
@@ -85,6 +86,19 @@ export const uploadSinglePhoto = (req, res, next) => {
                         raw: { width: rawInfo.width, height: rawInfo.height, channels: rawInfo.channels }
                     }).jpeg({ quality: 80 }).toBuffer();
 
+                    // OCR処理 (Tesseract.js)
+                    let ocrText = '';
+                    try {
+                        const worker = await createWorker('eng');
+                        const ret = await worker.recognize(processedBuffer);
+                        ocrText = ret.data.text;
+                        await worker.terminate();
+                        // 日本語対応が必要なら 'jpn' も追加検討
+                    } catch (ocrErr) {
+                        console.error('OCR Error:', ocrErr);
+                        // OCRエラーでもアップロード自体は続行
+                    }
+
                     // UUID化されたファイル名
                     const newFilename = uuidv4() + '.jpeg';
 
@@ -93,7 +107,8 @@ export const uploadSinglePhoto = (req, res, next) => {
                         filename: newFilename,
                         mimetype: 'image/png',
                         buffer: processedBuffer,
-                        size: processedBuffer.length
+                        size: processedBuffer.length,
+                        ocrText: ocrText // OCR結果を追加
                     };
                     resolve();
 

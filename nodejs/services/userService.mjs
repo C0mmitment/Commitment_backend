@@ -6,7 +6,7 @@ const apiLatestResult = [];
 
 const GO_API_URL = process.env.GO_API_URL;
 
-const advice = async (file, category, uuid, geoResult, isGathering, previousAnalysis) => {
+const advice = async (file, category, uuid, geoResult, isGathering, previousAnalysis, ocrText) => {
     if (!GO_API_URL) {
         return { status: 500, message: 'サーバー内部の設定エラーです。', error: 'GO_API_URL is not set' };
     }
@@ -28,7 +28,7 @@ const advice = async (file, category, uuid, geoResult, isGathering, previousAnal
         form.append('longitude', geoResult?.longitude?.toString() || '');
         form.append('geohash', geoResult?.geohash || '');
         form.append('save_loc', Gat.toString());
-        form.append('ocr_text', "しらすによる回答");
+        form.append('ocr_text', ocrText || '');
 
         if (previousAnalysis) {
             form.append('pre_analysis', previousAnalysis);

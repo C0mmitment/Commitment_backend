@@ -37,7 +37,7 @@ const advice = async (req, res) => {
         });
     }
 
-    const result = await userService.advice(file, category, uuid, geoResult, isGathering, previousAnalysis);
+    const result = await userService.advice(file, category, uuid, geoResult, isGathering, previousAnalysis, file.ocrText || '');
 
     if (result.status === 200) {
         res.status(result.status).json(result.data);
