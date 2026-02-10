@@ -28,6 +28,7 @@ const advice = async (file, category, uuid, geoResult, isGathering, previousAnal
         form.append('longitude', geoResult?.longitude?.toString() || '');
         form.append('geohash', geoResult?.geohash || '');
         form.append('save_loc', Gat.toString());
+        form.append('ocr_text', "しらすによる回答");
 
         if (previousAnalysis) {
             form.append('pre_analysis', previousAnalysis);

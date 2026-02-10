@@ -51,6 +51,7 @@ func (h *ImageHandler) AnalyzeImageEchoHandler(c echo.Context) error {
 	lngStr := c.FormValue("longitude")
 	geo := c.FormValue("geohash")
 	saveLocStr := c.FormValue("save_loc")
+	ocrText := c.FormValue("ocr_text")
 
 	userUUID, err := uuid.Parse(userUUIDStr)
 	if err != nil {
@@ -78,7 +79,7 @@ func (h *ImageHandler) AnalyzeImageEchoHandler(c echo.Context) error {
 
 	mimeType := header.Header.Get("Content-Type")
 
-	analysisResult, err := h.Analyzer.AnalyzeImage(ctx, userUUID, file, mimeType, category, geo, lat, lng, saveLoc, prevAnalysis)
+	analysisResult, err := h.Analyzer.AnalyzeImage(ctx, userUUID, file, mimeType, category, geo, lat, lng, saveLoc, prevAnalysis, ocrText)
 
 	if err != nil {
 		log.Printf("[Analysis Error] %v", err)
