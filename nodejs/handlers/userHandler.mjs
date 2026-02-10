@@ -15,13 +15,6 @@ const advice = async (req, res) => {
     const longFloat = parseFloat(long) ?? null;
 
     const previousAnalysis = req.body.pre_analysis || '';
-
-    console.log(uuid);
-    console.log(category);
-    console.log(latFloat);
-    console.log(longFloat);
-    console.log(previousAnalysis);
-
     let geoResult = null;
 
     if (isGathering) {
