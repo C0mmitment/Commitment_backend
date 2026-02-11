@@ -1,1 +1,2 @@
 DROP TABLE IF EXISTS photo_locations;
+DROP TABLE IF EXISTS tips;
