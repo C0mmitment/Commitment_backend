@@ -52,8 +52,8 @@ func (s *GeminiAIService) GetCompositionAdvice(ctx context.Context, category str
 		{Category: genai.HarmCategorySexuallyExplicit, Threshold: genai.HarmBlockNone},
 		{Category: genai.HarmCategoryDangerousContent, Threshold: genai.HarmBlockNone},
 	}
-	genModel.SetTemperature(0.4)
-	genModel.SetMaxOutputTokens(3000)
+	genModel.SetTemperature(0.6)
+	genModel.SetMaxOutputTokens(2700)
 
 	genModel.ResponseMIMEType = "application/json"
 	genModel.ResponseSchema = &genai.Schema{
@@ -151,7 +151,6 @@ func (s *GeminiAIService) GetCompositionAdvice(ctx context.Context, category str
 		- advice: 50文字以内 (「線に合わせて」等、直感的に)
 		- カテゴリ: %s`
 
-
 	var prompt string
 	if prevAnalysis == nil {
 		prompt = fmt.Sprintf(systemInst+`
@@ -167,8 +166,8 @@ func (s *GeminiAIService) GetCompositionAdvice(ctx context.Context, category str
         - 前回カテゴリ: %s
         
         # 判定ルール:
-        1. 改善なら "improved"、変化なしなら "unchanged"、悪化なら "regressed"。
-        2. 前回のアドバイス通りに動けているか厳しく判定せよ。
+        1. 一つでも改善 "improved"、全く変化なし "unchanged"、変化なしかつ悪化 "regressed"。
+        2. 前回のアドバイス通りに動けているか判定せよ。
         
         [ end prompt ]`,
 			category,
