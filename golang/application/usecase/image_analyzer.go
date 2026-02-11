@@ -16,7 +16,7 @@ import (
 )
 
 type ImageAnalyzerUsecase interface {
-	AnalyzeImage(ctx context.Context, userId uuid.UUID, imageReader io.Reader, mimeType, category, geohash string, lat, lng float64, saveLocation bool, prevAnalysis *model.Comparison) (*model.CompositionAnalysis, error)
+	AnalyzeImage(ctx context.Context, userId uuid.UUID, imageReader io.Reader, mimeType, category, geohash string, lat, lng float64, saveLocation bool, prevAnalysis *model.Comparison, ocrText string) (*model.CompositionAnalysis, error)
 }
 
 type ImageAnalyzer struct {
@@ -31,7 +31,7 @@ func NewImageAnalyzer(connector service.AIConnector, heatmapRepo repository.Loca
 	}
 }
 
-func (a *ImageAnalyzer) AnalyzeImage(ctx context.Context, userId uuid.UUID, imageReader io.Reader, mimeType, category, geohash string, lat, lng float64, saveLocation bool, prevAnalysis *model.Comparison) (*model.CompositionAnalysis, error) {
+func (a *ImageAnalyzer) AnalyzeImage(ctx context.Context, userId uuid.UUID, imageReader io.Reader, mimeType, category, geohash string, lat, lng float64, saveLocation bool, prevAnalysis *model.Comparison, ocrText string) (*model.CompositionAnalysis, error) {
 	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
 
@@ -52,7 +52,7 @@ func (a *ImageAnalyzer) AnalyzeImage(ctx context.Context, userId uuid.UUID, imag
 	var advice *model.CompositionAnalysis
 
 	g.Go(func() error {
-		res, err := a.Connector.GetCompositionAdvice(ctx, category, imageReader, mimeType, prevAnalysis)
+		res, err := a.Connector.GetCompositionAdvice(ctx, category, imageReader, mimeType, ocrText, prevAnalysis)
 		if err != nil {
 			return fmt.Errorf("AIコネクタ処理エラー: %w", err)
 		}

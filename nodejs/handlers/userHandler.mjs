@@ -15,14 +15,13 @@ const advice = async (req, res) => {
     const longFloat = parseFloat(long) ?? null;
 
     const previousAnalysis = req.body.pre_analysis || '';
-
     let geoResult = null;
 
-    if(isGathering) {
-        geoResult = await locationService.gathering(latFloat,longFloat);
+    if (isGathering) {
+        geoResult = await locationService.gathering(latFloat, longFloat);
     }
 
-    const file = req.file; 
+    const file = req.file;
 
     if (!file) {
         return res.status(400).json({
@@ -31,7 +30,7 @@ const advice = async (req, res) => {
         });
     }
 
-    const result = await userService.advice(file, category, uuid, geoResult, isGathering, previousAnalysis);
+    const result = await userService.advice(file, category, uuid, geoResult, isGathering, previousAnalysis, file.ocrText || '');
 
     if (result.status === 200) {
         res.status(result.status).json(result.data);
@@ -45,7 +44,7 @@ const advice = async (req, res) => {
     }
 }
 
-const apiHealth = async(req, res) => {
+const apiHealth = async (req, res) => {
     const result = await userService.apiHealth();
     res.status(result.status).json({
         status: result.status,
@@ -54,7 +53,20 @@ const apiHealth = async(req, res) => {
     });
 }
 
+const test = async (req, res) => {
+    if (!req.file || !req.file.buffer) {
+        return res.status(400).send('ファイルがありません');
+    }
+
+    res.setHeader('Content-Type', req.file.mimetype);
+    res.setHeader('Content-Length', req.file.buffer.length);
+    res.send(req.file.buffer);
+};
+
+
+
 export default {
     advice,
     apiHealth,
+    test,
 }

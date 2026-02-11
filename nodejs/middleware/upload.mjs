@@ -1,5 +1,8 @@
 import Busboy from 'busboy';
 import path from 'path';
+import sharp from 'sharp';
+import { v4 as uuidv4 } from 'uuid';
+import { createWorker } from 'tesseract.js';
 
 // 定数設定
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
@@ -9,79 +12,121 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 export const uploadSinglePhoto = (req, res, next) => {
     let busboy;
     try {
-        busboy = Busboy({ 
+        busboy = Busboy({
             headers: req.headers,
-            // ★Busboyの機能でサイズ制限をかける
-            limits: {
-                fileSize: MAX_FILE_SIZE, 
-            }
+            limits: { fileSize: MAX_FILE_SIZE }
         });
     } catch (e) {
-        return res.status(400).json({ error: 'リクエスト形式エラー', message: 'ヘッダーが不正です' });
+        return res.status(400).json({ error: 'HEADER_ERROR', message: 'ヘッダーが不正です' });
     }
 
     req.body = {};
-    let nextCalled = false; // 二重呼び出し防止用フラグ
-    let fileErrorOccurred = false; // ファイルエラー発生フラグ
+    let nextCalled = false;
+    let fileErrorOccurred = false;
+    const fileWrites = [];
 
-    // エラーハンドリング用関数
     const sendError = (code, message) => {
         if (!nextCalled) {
             nextCalled = true;
-            // リクエストのパイプを解除して停止
             req.unpipe(busboy);
-            // エラーレスポンスを返す（ここはNext(err)でも良いが、JSONを明確に返す）
-            return res.status(400).json({ error: code, message: message });
+            return res.status(400).json({ error: code, message });
         }
     };
 
-    // 1. テキストフィールドの処理
+    // --- テキストフィールド ---
     busboy.on('field', (fieldname, val) => {
         req.body[fieldname] = val;
     });
 
-    // 2. ファイルフィールドの処理
+    // --- ファイルフィールド ---
     busboy.on('file', (fieldname, file, info) => {
         const { filename, mimeType } = info;
+        const processPromise = new Promise(async (resolve, reject) => {
+            const ext = path.extname(filename).toLowerCase();
+            const mimeOk = ALLOWED_MIME_TYPES.includes(mimeType);
+            const extOk = ALLOWED_EXTENSIONS.includes(ext);
 
-        // --- A. 拡張子とMIMEタイプのチェック ---
-        const ext = path.extname(filename).toLowerCase();
-        const mimeOk = ALLOWED_MIME_TYPES.includes(mimeType);
-        const extOk = ALLOWED_EXTENSIONS.includes(ext);
+            if (!mimeOk || !extOk) {
+                fileErrorOccurred = true;
+                file.resume();
+                sendError('FILE_TYPE_ERROR', '許可されていないファイル形式です (JPG/PNGのみ)');
+                return resolve();
+            }
 
-        if (!mimeOk || !extOk) {
-            fileErrorOccurred = true;
-            file.resume(); // ★重要: データを捨ててストリームを空にする（これをしないと詰まる）
-            return sendError('FILE_TYPE_ERROR', '許可されていないファイル形式です (JPG/PNGのみ)');
-        }
+            file.on('limit', () => {
+                fileErrorOccurred = true;
+                file.resume();
+                sendError('LIMIT_FILE_SIZE', 'ファイルサイズは5MB以下にしてください');
+                return resolve();
+            });
 
-        // --- B. サイズ超過時のイベントハンドラ ---
-        file.on('limit', () => {
-            fileErrorOccurred = true;
-            // 制限を超えたらデータを捨てる
-            file.resume(); 
-            return sendError('LIMIT_FILE_SIZE', 'ファイルサイズは5MB以下にしてください');
+            const chunks = [];
+            file.on('data', (chunk) => chunks.push(chunk));
+
+            file.on('end', async () => {
+                if (fileErrorOccurred || nextCalled) return resolve();
+
+                const buffer = Buffer.concat(chunks);
+
+                try {
+                    // Sharp で処理
+                    let processedBuffer = await sharp(buffer)
+                        .resize({ width: 512, withoutEnlargement: true })
+                        .withMetadata({ exif: undefined })
+                        .jpeg({ quality: 80 })
+                        .toBuffer();
+
+                    // 微小ノイズ追加
+                    const raw = await sharp(processedBuffer).raw().toBuffer({ resolveWithObject: true });
+                    const { data, info: rawInfo } = raw;
+                    for (let i = 0; i < data.length; i++) {
+                        data[i] = Math.min(255, Math.max(0, data[i] + Math.floor(Math.random() * 3 - 1)));
+                    }
+                    processedBuffer = await sharp(data, {
+                        raw: { width: rawInfo.width, height: rawInfo.height, channels: rawInfo.channels }
+                    }).jpeg({ quality: 80 }).toBuffer();
+
+                    // OCR処理 (Tesseract.js)
+                    let ocrText = '';
+                    try {
+                        const worker = await createWorker('eng');
+                        const ret = await worker.recognize(processedBuffer);
+                        ocrText = ret.data.text;
+                        await worker.terminate();
+                        // 日本語対応が必要なら 'jpn' も追加検討
+                    } catch (ocrErr) {
+                        console.error('OCR Error:', ocrErr);
+                        // OCRエラーでもアップロード自体は続行
+                    }
+
+                    // UUID化されたファイル名
+                    const newFilename = uuidv4() + '.jpeg';
+
+                    req.file = {
+                        originalname: filename,
+                        filename: newFilename,
+                        mimetype: 'image/png',
+                        buffer: processedBuffer,
+                        size: processedBuffer.length,
+                        ocrText: ocrText // OCR結果を追加
+                    };
+                    resolve();
+
+                } catch (err) {
+                    console.error('Image processing error:', err);
+                    sendError('IMAGE_PROCESS_ERROR', '画像処理中にエラーが発生しました');
+                    resolve(); // Resolve to allow finish to proceed (though sendError will stop next)
+                }
+            });
+
+            file.on('error', (err) => {
+                console.error('File stream error:', err);
+                reject(err);
+            });
         });
-
-        // --- C. 正常な場合の処理 ---
-        // ここでストリームを止めて、コントローラーへ渡す
-        file.pause();
-
-        req.file = {
-            originalname: filename,
-            mimetype: mimeType,
-            stream: file 
-        };
-
-        // ファイルが見つかった時点でコントローラーへ
-        // (サイズエラーは後から発生する可能性があるので、エラーがない場合のみ)
-        if (!nextCalled && !fileErrorOccurred) {
-            nextCalled = true;
-            next();
-        }
+        fileWrites.push(processPromise);
     });
 
-    // 3. 全体エラー処理
     busboy.on('error', (err) => {
         if (!nextCalled) {
             nextCalled = true;
@@ -90,16 +135,22 @@ export const uploadSinglePhoto = (req, res, next) => {
         }
     });
 
-    // 4. 解析完了（ファイルなしで終了した場合など）
-    busboy.on('finish', () => {
+    busboy.on('finish', async () => {
+        try {
+            await Promise.all(fileWrites);
+        } catch (err) {
+            if (!nextCalled) {
+                nextCalled = true;
+                console.error('Processing Error during finish:', err);
+                return res.status(500).json({ error: 'PROCESSING_ERROR', message: 'ファイルの処理中にエラーが発生しました' });
+            }
+        }
+
         if (!nextCalled && !fileErrorOccurred) {
-            // ファイルが見つからなかった、かつエラーも起きていない場合
-            // (必須チェックはコントローラー側で行う前提なら通してOK)
             nextCalled = true;
             next();
         }
     });
 
-    // 解析開始
     req.pipe(busboy);
 };
