@@ -32,7 +32,7 @@ func NewImageAnalyzer(connector service.AIConnector, heatmapRepo repository.Loca
 }
 
 func (a *ImageAnalyzer) AnalyzeImage(ctx context.Context, userId uuid.UUID, imageReader io.Reader, mimeType, category, geohash string, lat, lng float64, saveLocation bool, prevAnalysis *model.Comparison, ocrText string) (*model.CompositionAnalysis, error) {
-	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 35*time.Second)
 	defer cancel()
 
 	locationEntity, _ := model.NewAddLocation(userId, lat, lng, geohash)
