@@ -69,14 +69,12 @@ export const uploadSinglePhoto = (req, res, next) => {
                 const buffer = Buffer.concat(chunks);
 
                 try {
-                    // Sharp で処理
                     let processedBuffer = await sharp(buffer)
                         .resize({ width: 512, withoutEnlargement: true })
                         .withMetadata({ exif: undefined })
                         .jpeg({ quality: 80 })
                         .toBuffer();
 
-                    // 微小ノイズ追加
                     const raw = await sharp(processedBuffer).raw().toBuffer({ resolveWithObject: true });
                     const { data, info: rawInfo } = raw;
                     for (let i = 0; i < data.length; i++) {
@@ -86,20 +84,16 @@ export const uploadSinglePhoto = (req, res, next) => {
                         raw: { width: rawInfo.width, height: rawInfo.height, channels: rawInfo.channels }
                     }).jpeg({ quality: 80 }).toBuffer();
 
-                    // OCR処理 (Tesseract.js)
                     let ocrText = '';
                     try {
                         const worker = await createWorker('eng');
                         const ret = await worker.recognize(processedBuffer);
                         ocrText = ret.data.text;
                         await worker.terminate();
-                        // 日本語対応が必要なら 'jpn' も追加検討
                     } catch (ocrErr) {
                         console.error('OCR Error:', ocrErr);
-                        // OCRエラーでもアップロード自体は続行
                     }
 
-                    // UUID化されたファイル名
                     const newFilename = uuidv4() + '.jpeg';
 
                     req.file = {
@@ -108,14 +102,14 @@ export const uploadSinglePhoto = (req, res, next) => {
                         mimetype: 'image/png',
                         buffer: processedBuffer,
                         size: processedBuffer.length,
-                        ocrText: ocrText // OCR結果を追加
+                        ocrText: ocrText
                     };
                     resolve();
 
                 } catch (err) {
                     console.error('Image processing error:', err);
                     sendError('IMAGE_PROCESS_ERROR', '画像処理中にエラーが発生しました');
-                    resolve(); // Resolve to allow finish to proceed (though sendError will stop next)
+                    resolve(); 
                 }
             });
 
